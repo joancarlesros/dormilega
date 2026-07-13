@@ -50,9 +50,9 @@
   .bigbtn.wake{background:linear-gradient(135deg,#f59e0b,#fcd34d);color:#3b2f00;
     box-shadow:0 8px 30px rgba(252,211,77,.3)}
   .feedbtn{background:linear-gradient(135deg,#059669,#34d399);margin:0 0 16px}
-  .diapbtn2{margin:14px 0 2px;padding:14px;font-size:1rem;border-radius:16px;
+  .diapbtn2{margin:0 0 16px;
     background:linear-gradient(135deg,#db2777,#f472b6);color:#fff;
-    box-shadow:0 6px 20px rgba(236,72,153,.25)}
+    box-shadow:0 8px 30px rgba(236,72,153,.3)}
   #ptr{position:fixed;top:calc(10px + env(safe-area-inset-top));left:50%;transform:translateX(-50%);
     background:var(--card2);border-radius:50%;width:38px;height:38px;display:none;align-items:center;
     justify-content:center;z-index:98;font-size:1.2rem;box-shadow:0 4px 14px rgba(0,0,0,.4)}
@@ -196,33 +196,45 @@
 <!-- ══════ AVUI ══════ -->
 <section id="scr-home" class="screen">
   <div class="row">
-    <div><h1 id="home-title">Hola</h1><p class="sub" id="home-age" style="margin-bottom:6px"></p></div>
+    <div><h1 id="home-title">Hola</h1>
+      <div class="row" style="justify-content:flex-start;gap:10px;margin-bottom:6px">
+        <p class="sub" id="home-age" style="margin:0"></p>
+        <div id="syncdot" style="font-size:.72rem;color:var(--muted)"></div>
+      </div>
+    </div>
   </div>
-  <button class="small secondary" onclick="doRefresh()">🔄 Actualitza</button>
-  <div id="syncdot" style="font-size:.72rem;color:var(--muted);margin-top:5px"></div>
 
-  <div class="daytotals" id="dayTotals"></div>
+  <div class="pred" style="margin-top:8px">
+    <div class="card">
+      <div class="lbl">😴 Propera migdiada <span id="pred-nap-ww"></span></div>
+      <div class="time" id="pred-nap">--:--</div>
+      <div class="lbl" id="pred-nap-sub"></div>
+    </div>
+    <div class="card">
+      <div class="lbl">🛌 Hora d'anar a dormir</div>
+      <div class="time" id="pred-bed">--:--</div>
+      <div class="lbl" id="pred-bed-sub"></div>
+    </div>
+    <div class="card">
+      <div class="lbl">🍼 Propera presa <span id="pred-feed-every"></span></div>
+      <div class="time" id="pred-feed">--:--</div>
+      <div class="lbl" id="pred-feed-sub"></div>
+    </div>
+  </div>
 
   <div class="statuscircle" id="statusCircle">
     <div class="emoji" id="st-emoji">☀️</div>
     <div class="t" id="st-timer">--:--</div>
     <div class="lbl" id="st-label">despert</div>
-    <div class="lbl" id="st-sub" style="font-size:.68rem"></div>
   </div>
 
   <button class="bigbtn" id="mainBtn" onclick="toggleSleep()">😴 Comença a dormir</button>
-  <button class="bigbtn feedbtn" id="feedBtnMain" onclick="openFeed(null)">🍼 Registrar biberó</button>
-
-  <div class="pred">
-    <div class="card"><div class="lbl">😴 Propera migdiada</div><div class="time" id="pred-nap">--:--</div><div class="lbl" id="pred-nap-sub"></div></div>
-    <div class="card"><div class="lbl">🍼 Propera presa</div><div class="time" id="pred-feed">--:--</div><div class="lbl" id="pred-feed-sub"></div></div>
-  </div>
-
-  <div class="card" id="bedBar" style="margin-top:10px;padding:12px;text-align:center;font-size:.92rem;margin-bottom:0"></div>
-
-  <button class="diapbtn2" onclick="openDiaper(null)">🩲 Registrar canvi de bolquer</button>
+  <button class="bigbtn feedbtn" id="feedBtnMain" onclick="openFeed(null)">🍼 Registrar presa de biberó</button>
+  <button class="bigbtn diapbtn2" onclick="openDiaper(null)">🩲 Registrar canvi de bolquer</button>
 
   <h2>Avui</h2>
+  <div class="daytotals" id="dayTotals"></div>
+  <p class="sub" style="margin:2px 0 10px">Cronologia d'avui</p>
   <div class="card" id="todayList"><p class="sub" style="margin:0">Encara no hi ha registres</p></div>
 </section>
 
@@ -795,7 +807,6 @@ function renderHome(){
   c.classList.toggle('sleeping', !!og);
   $('st-emoji').textContent = og ? '😴' : '👶';
   $('st-label').textContent = og ? (og.kind==='night'?'dormint (nit)':'fent la migdiada') : 'despert';
-  $('st-sub').textContent = og ? '' : `finestra ~${adaptedWW()} min`;
   const btn=$('mainBtn');
   btn.textContent = og ? "☀️ S'ha despertat" : '😴 Comença a dormir';
   btn.classList.toggle('wake', !!og);
@@ -803,18 +814,24 @@ function renderHome(){
   const p = prediction();
   $('pred-nap').textContent = p.nap ? fmtT(p.nap) : '—';
   $('pred-nap-sub').textContent = p.nap ? (p.nap<new Date()?'ja toca!':`d'aquí a ${fmtDur(p.nap-new Date())}`) : (og? 'dormint ara':'avui ja no toca');
+  $('pred-nap-ww').textContent = `(finestra ~${adaptedWW()} min)`;
+
+  // Hora d'anar a dormir: objectiu per edat + franja ideal (d'on surt)
+  const bh=defaultBedHour();
+  const bedC=new Date(); bedC.setHours(Math.floor(bh), Math.round((bh%1)*60), 0, 0);
+  const b1=new Date(bedC.getTime()-20*60000), b2=new Date(bedC.getTime()+20*60000);
+  $('pred-bed').textContent = fmtT(bedC);
+  $('pred-bed-sub').textContent = `franja ${fmtT(b1)}–${fmtT(b2)}`;
+
   const lastF = feedings.length? new Date(feedings[feedings.length-1].start_at):null;
   const gapH = ageWeeks()<14?3:4;
+  $('pred-feed-every').textContent = `(cada ${gapH} h)`;
   const nf = lastF? new Date(lastF.getTime()+gapH*3600000):null;
   $('pred-feed').textContent = nf? fmtT(nf):'—';
   $('pred-feed-sub').textContent = nf?
-    (nf<new Date()? `porta ${fmtDur(new Date()-nf)} de retard (cada ~${gapH} h)`
-                  : `d'aquí a ${fmtDur(nf-new Date())} (cada ~${gapH} h)`)
+    (nf<new Date()? `porta ${fmtDur(new Date()-nf)} de retard`
+                  : `d'aquí a ${fmtDur(nf-new Date())}`)
     : 'registra una presa';
-  const bh=defaultBedHour();
-  const b1=new Date(); b1.setHours(Math.floor(bh), Math.round((bh%1)*60)-20, 0, 0);
-  const b2=new Date(b1.getTime()+40*60000);
-  $('bedBar').textContent = `🛌 Franja ideal per anar a dormir: ${fmtT(b1)} – ${fmtT(b2)}`;
   tick();
 
   const today = mergedItems().filter(it=>dayKey(it.start_at)===dayKey(new Date())).reverse();
@@ -1339,6 +1356,6 @@ function show(id,txt,cls){ $(id).innerHTML=`<div class="msg ${cls}">${txt}</div>
 
 boot();
 </script>
-<!-- Dormilega v19 -->
+<!-- Dormilega v20 -->
 </body>
 </html>
