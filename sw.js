@@ -1,5 +1,5 @@
 /* Dormilega — service worker: app shell offline + memòria cau de CDNs */
-const CACHE = 'dormilega-v17';
+const CACHE = 'dormilega-v18';
 const SHELL = [
   './index.html',
   './manifest.webmanifest',
