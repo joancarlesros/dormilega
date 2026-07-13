@@ -23,6 +23,7 @@ create table if not exists public.sleep_sessions (
   start_at timestamptz not null,
   end_at timestamptz,                          -- null = dormint ara
   kind text not null check (kind in ('nap','night')),
+  location text,                               -- bressol, cotxet, bracos, llit_pares, altres
   notes text,
   created_at timestamptz not null default now()
 );
@@ -40,10 +41,27 @@ create table if not exists public.feedings (
   created_at timestamptz not null default now()
 );
 
+-- Canvis de bolquer
+create table if not exists public.diapers (
+  id uuid primary key default gen_random_uuid(),
+  user_id uuid not null references auth.users(id) on delete cascade,
+  baby_id uuid not null references public.babies(id) on delete cascade,
+  start_at timestamptz not null,
+  pee boolean not null default false,
+  poo boolean not null default false,
+  notes text,
+  created_at timestamptz not null default now()
+);
+
+-- Actualització des de versions anteriors (idempotent)
+alter table public.sleep_sessions add column if not exists location text;
+
 create index if not exists idx_sessions_baby_start
   on public.sleep_sessions (baby_id, start_at desc);
 create index if not exists idx_feedings_baby_start
   on public.feedings (baby_id, start_at desc);
+create index if not exists idx_diapers_baby_start
+  on public.diapers (baby_id, start_at desc);
 
 -- Seguretat: cada usuari només veu les seves dades
 alter table public.babies enable row level security;
@@ -62,6 +80,24 @@ drop policy if exists "own feedings" on public.feedings;
 create policy "own feedings" on public.feedings
   for all using (auth.uid() = user_id) with check (auth.uid() = user_id);
 
--- Sincronització en temps real entre dispositius
-alter publication supabase_realtime add table public.sleep_sessions;
-alter publication supabase_realtime add table public.feedings;
+alter table public.diapers enable row level security;
+drop policy if exists "own diapers" on public.diapers;
+create policy "own diapers" on public.diapers
+  for all using (auth.uid() = user_id) with check (auth.uid() = user_id);
+
+-- Sincronització en temps real entre dispositius (idempotent)
+do $$
+begin
+  if not exists (select 1 from pg_publication_tables
+    where pubname='supabase_realtime' and schemaname='public' and tablename='sleep_sessions') then
+    alter publication supabase_realtime add table public.sleep_sessions;
+  end if;
+  if not exists (select 1 from pg_publication_tables
+    where pubname='supabase_realtime' and schemaname='public' and tablename='feedings') then
+    alter publication supabase_realtime add table public.feedings;
+  end if;
+  if not exists (select 1 from pg_publication_tables
+    where pubname='supabase_realtime' and schemaname='public' and tablename='diapers') then
+    alter publication supabase_realtime add table public.diapers;
+  end if;
+end $$;

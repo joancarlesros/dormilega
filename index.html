@@ -45,11 +45,18 @@
   button.small{width:auto;padding:8px 14px;font-size:.85rem;border-radius:10px}
   button.danger{background:transparent;color:var(--warn);border:1px solid var(--warn)}
   button:disabled{opacity:.5}
-  .bigbtn{margin:18px 0 10px;padding:22px;font-size:1.25rem;border-radius:24px;
+  .bigbtn{margin:16px 0 8px;padding:22px;font-size:1.25rem;border-radius:24px;
     background:linear-gradient(135deg,#7c6cf0,#a78bfa);box-shadow:0 8px 30px rgba(124,108,240,.4)}
   .bigbtn.wake{background:linear-gradient(135deg,#f59e0b,#fcd34d);color:#3b2f00;
     box-shadow:0 8px 30px rgba(252,211,77,.3)}
-  .feedbtn{background:linear-gradient(135deg,#059669,#34d399);margin-bottom:18px}
+  .feedbtn{background:linear-gradient(135deg,#059669,#34d399);margin:0 0 16px;flex:1}
+  .diapbtn{background:linear-gradient(135deg,#d97706,#fbbf24);color:#3b2600;margin:0 0 16px;flex:1;
+    box-shadow:0 8px 30px rgba(251,191,36,.25)}
+  #ptr{position:fixed;top:calc(10px + env(safe-area-inset-top));left:50%;transform:translateX(-50%);
+    background:var(--card2);border-radius:50%;width:38px;height:38px;display:none;align-items:center;
+    justify-content:center;z-index:98;font-size:1.2rem;box-shadow:0 4px 14px rgba(0,0,0,.4)}
+  #ptr.on{display:flex;animation:ptrspin 1s linear infinite}
+  @keyframes ptrspin{to{transform:translateX(-50%) rotate(360deg)}}
   .statuscircle{width:170px;height:170px;border-radius:50%;margin:14px auto;display:flex;
     flex-direction:column;align-items:center;justify-content:center;gap:4px;
     background:radial-gradient(circle at 35% 30%, var(--card2), var(--bg2));
@@ -66,6 +73,7 @@
   .badge.nap{background:rgba(167,139,250,.2);color:var(--nap)}
   .badge.night{background:rgba(56,189,248,.18);color:var(--night)}
   .badge.feed{background:rgba(52,211,153,.16);color:var(--feed)}
+  .badge.diaper{background:rgba(251,191,36,.16);color:#fbbf24}
   .sess{display:grid;grid-template-columns:104px 1fr auto;align-items:center;padding:11px 0;gap:8px;
     border-bottom:1px solid rgba(255,255,255,.06)}
   .sess:last-child{border-bottom:none}
@@ -127,6 +135,7 @@
 <body>
 
 <div id="offlineBar" class="offline hidden">Sense connexió: els canvis es desaran i se sincronitzaran quan torni</div>
+<div id="ptr">↻</div>
 
 <!-- ══════ CONFIG ══════ -->
 <section id="scr-config" class="screen">
@@ -178,10 +187,7 @@
 <section id="scr-home" class="screen">
   <div class="row">
     <div><h1 id="home-title">Hola</h1><p class="sub" id="home-age"></p></div>
-    <div style="text-align:right">
-      <button class="small secondary" id="refreshBtn" onclick="doRefresh()" style="margin-bottom:4px">↻</button>
-      <div id="syncdot" style="font-size:.72rem;color:var(--muted)"></div>
-    </div>
+    <div id="syncdot" style="font-size:.72rem;color:var(--muted)"></div>
   </div>
 
   <div class="daytotals" id="dayTotals"></div>
@@ -193,11 +199,14 @@
   </div>
 
   <button class="bigbtn" id="mainBtn" onclick="toggleSleep()">😴 Comença a dormir</button>
-  <button class="bigbtn feedbtn" onclick="openFeed(null)">🍼 Registrar presa</button>
+  <div style="display:flex;gap:10px">
+    <button class="bigbtn feedbtn" onclick="openFeed(null)">🍼 Presa</button>
+    <button class="bigbtn diapbtn" onclick="openDiaper(null)">🩲 Bolquer</button>
+  </div>
 
   <div class="pred">
-    <div class="card"><div class="lbl">Propera migdiada</div><div class="time" id="pred-nap">--:--</div><div class="lbl" id="pred-nap-sub"></div></div>
-    <div class="card"><div class="lbl">Al llit</div><div class="time" id="pred-bed">--:--</div><div class="lbl" id="pred-bed-sub"></div></div>
+    <div class="card"><div class="lbl">😴 Propera migdiada</div><div class="time" id="pred-nap">--:--</div><div class="lbl" id="pred-nap-sub"></div></div>
+    <div class="card"><div class="lbl">🍼 Propera presa</div><div class="time" id="pred-feed">--:--</div><div class="lbl" id="pred-feed-sub"></div></div>
   </div>
 
   <h2>Avui</h2>
@@ -210,6 +219,7 @@
     <div style="display:flex;gap:8px">
       <button class="small" onclick="openEditor(null)">＋ Son</button>
       <button class="small" style="background:var(--feed);color:#053b2b" onclick="openFeed(null)">＋ Presa</button>
+      <button class="small" style="background:#fbbf24;color:#3b2600" onclick="openDiaper(null)">＋ Bolquer</button>
     </div></div>
   <div id="logList"></div>
 </section>
@@ -311,8 +321,12 @@
     <p class="sub" style="margin-bottom:0">Comença a 100 i resta punts: son total fora de rang (−20), finestres >25 % per sobre del típic (−10), hora de llit variable més de ±45 min (−12), confusió dia-nit (−8), majoria de migdiades de menys de 45 min a partir dels 3 mesos (−8), despertars per sobre del típic (−10), despertar matinal variable (−5), menys del 50 % de son al bressol a partir dels 3 mesos (−5), moltes preses nocturnes a partir dels 4 mesos (−5). Mínim: 35. Colors: ≥85 verd, ≥70 groc, la resta vermell.</p>
   </div>
   <div class="card">
+    <h2 style="margin-top:0">🕛 Mètode Giordano ("12 hores als 3 mesos")</h2>
+    <p class="sub" style="margin-bottom:0">Mètode estructurat de Suzy Giordano, resumit: de dia, preses completes i espaiades (~4 h) en lloc de picar sovint; rutina de nit molt consistent; i reducció molt gradual de les preses nocturnes fins a consolidar una nit llarga cap a les 12 setmanes, sempre amb la corba de pes i el pediatre a favor. Què en reflecteix Dormilega: les àncores de consistència (hora de llit i despertar), el seguiment de preses nocturnes i el reforç de la ingesta diürna. Matís: és experiència clínica d'una assessora, no un assaig científic, i en nounats l'AAP recomana alimentació a demanda — pren-lo com a orientació a partir de les 8–12 setmanes.</p>
+  </div>
+  <div class="card">
     <h2 style="margin-top:0">📖 Bibliografia principal</h2>
-    <p class="sub" style="margin-bottom:0">Hirshkowitz M, et al. National Sleep Foundation's sleep time duration recommendations. Sleep Health, 2015 · Iglowstein I, et al. Sleep duration from infancy to adolescence: reference values. Pediatrics, 2003 · Galland BC, et al. Normal sleep patterns in infants and children. Sleep Medicine Reviews, 2012 · Mindell JA, et al. Bedtime routines for young children: a dose-dependent association with sleep outcomes. Sleep, 2015 · Moon RY, et al. (AAP Task Force) Evidence base for 2022 updated recommendations for a safe infant sleeping environment. Pediatrics, 2022 · Henderson JMT, et al. Sleeping through the night: infant sleep consolidation. Pediatrics, 2010 · Rivkees SA. Developing circadian rhythmicity in infants. Pediatrics, 2003.</p>
+    <p class="sub" style="margin-bottom:0">Hirshkowitz M, et al. National Sleep Foundation's sleep time duration recommendations. Sleep Health, 2015 · Iglowstein I, et al. Sleep duration from infancy to adolescence: reference values. Pediatrics, 2003 · Galland BC, et al. Normal sleep patterns in infants and children. Sleep Medicine Reviews, 2012 · Mindell JA, et al. Bedtime routines for young children: a dose-dependent association with sleep outcomes. Sleep, 2015 · Moon RY, et al. (AAP Task Force) Evidence base for 2022 updated recommendations for a safe infant sleeping environment. Pediatrics, 2022 · Henderson JMT, et al. Sleeping through the night: infant sleep consolidation. Pediatrics, 2010 · Rivkees SA. Developing circadian rhythmicity in infants. Pediatrics, 2003 · Giordano S, Abidin L. Twelve Hours' Sleep by Twelve Weeks Old. Dutton, 2006.</p>
   </div>
   <p class="sub">Dormilega no és un producte sanitari ni substitueix el pediatre; és una eina personal d'hàbits. Les recomanacions són heurístiques calculades amb les teves dades i aquests llindars publicats.</p>
 </section>
@@ -332,11 +346,11 @@
   <label>On dorm?</label>
   <select id="ed-loc">
     <option value="">—</option>
-    <option value="bressol">Bressol / niu</option>
+    <option value="bressol">Bressol / Niu</option>
     <option value="cotxet">Cotxet</option>
     <option value="cotxe">Cotxe</option>
     <option value="hamaca">Hamaca / Trip Trap</option>
-    <option value="bracos">En braços / contacte</option>
+    <option value="bracos">En braços</option>
     <option value="llit_pares">Llit dels pares</option>
   </select>
   <label>Inici</label><input id="ed-start" type="datetime-local">
@@ -372,6 +386,22 @@
   <br><button id="fd-del" class="danger hidden" onclick="deleteFeed()">Eliminar registre</button>
 </dialog>
 
+<!-- ══════ EDITOR BOLQUER ══════ -->
+<dialog id="diapeditor">
+  <h2 style="margin-top:0" id="dp-title">🩲 Canvi de bolquer</h2>
+  <label>Hora</label><input id="dp-time" type="datetime-local">
+  <div class="grid2" style="margin-top:14px">
+    <label style="display:flex;align-items:center;gap:8px;margin:0;font-size:1rem;color:var(--text)"><input type="checkbox" id="dp-pee" style="width:auto"> 💧 Pipí</label>
+    <label style="display:flex;align-items:center;gap:8px;margin:0;font-size:1rem;color:var(--text)"><input type="checkbox" id="dp-poo" style="width:auto"> 💩 Caca</label>
+  </div>
+  <div id="dp-msg"></div>
+  <div class="modal-actions">
+    <button class="secondary" onclick="closeDiaper()">Cancel·lar</button>
+    <button onclick="saveDiaper()">Desar</button>
+  </div>
+  <br><button id="dp-del" class="danger hidden" onclick="deleteDiaper()">Eliminar registre</button>
+</dialog>
+
 <script>
 'use strict';
 /* ════════════════════════════════════════════════════════════════
@@ -379,10 +409,11 @@
    Dades: Supabase (gratuït) · Offline: localStorage + cua de sync
    ════════════════════════════════════════════════════════════════ */
 
-const LS = { cfg:'dl_cfg', baby:'dl_baby', sessions:'dl_sessions', feedings:'dl_feedings', queue:'dl_queue' };
+const LS = { cfg:'dl_cfg', baby:'dl_baby', sessions:'dl_sessions', feedings:'dl_feedings', diapers:'dl_diapers', queue:'dl_queue' };
 let sb = null, user = null, baby = null;
 let sessions = [];   // son (30 dies), ordre asc per start_at
 let feedings = [];   // preses (30 dies), ordre asc per start_at
+let diapers  = [];   // bolquers (30 dies), ordre asc per start_at
 let charts = {}, notifTimer = null, feedTimer = null;
 
 const $ = id => document.getElementById(id);
@@ -432,7 +463,7 @@ async function boot(){
   if (!session){
     if (!navigator.onLine && localStorage.getItem(LS.baby)){
       baby = JSON.parse(localStorage.getItem(LS.baby));
-      sessions = loadLocal(LS.sessions); feedings = loadLocal(LS.feedings);
+      sessions = loadLocal(LS.sessions); feedings = loadLocal(LS.feedings); diapers = loadLocal(LS.diapers);
       return enterApp();
     }
     return switchScreen('auth');
@@ -455,7 +486,7 @@ async function doLogin(){
   user = data.user; afterLogin();
 }
 async function doLogout(){ await sb.auth.signOut();
-  [LS.baby,LS.sessions,LS.feedings].forEach(k=>localStorage.removeItem(k)); location.reload(); }
+  [LS.baby,LS.sessions,LS.feedings,LS.diapers].forEach(k=>localStorage.removeItem(k)); location.reload(); }
 
 async function afterLogin(){
   const {data:babies} = await sb.from('babies').select('*').limit(1);
@@ -490,18 +521,21 @@ function loadLocal(k){ try{return JSON.parse(localStorage.getItem(k))||[]}catch(
 function persistLocal(){
   localStorage.setItem(LS.sessions, JSON.stringify(sessions));
   localStorage.setItem(LS.feedings, JSON.stringify(feedings));
+  localStorage.setItem(LS.diapers, JSON.stringify(diapers));
 }
-function arrFor(tbl){ return tbl==='feedings' ? feedings : sessions; }
-function setArr(tbl, a){ if(tbl==='feedings') feedings=a; else sessions=a; }
+function arrFor(tbl){ return tbl==='feedings' ? feedings : tbl==='diapers' ? diapers : sessions; }
+function setArr(tbl, a){ if(tbl==='feedings') feedings=a; else if(tbl==='diapers') diapers=a; else sessions=a; }
 
 async function loadData(){
   const since = new Date(Date.now()-30*864e5).toISOString();
-  const [s,f] = await Promise.all([
+  const [s,f,dp] = await Promise.all([
     sb.from('sleep_sessions').select('*').eq('baby_id',baby.id).gte('start_at',since).order('start_at',{ascending:true}),
-    sb.from('feedings').select('*').eq('baby_id',baby.id).gte('start_at',since).order('start_at',{ascending:true})
+    sb.from('feedings').select('*').eq('baby_id',baby.id).gte('start_at',since).order('start_at',{ascending:true}),
+    sb.from('diapers').select('*').eq('baby_id',baby.id).gte('start_at',since).order('start_at',{ascending:true})
   ]);
   sessions = (!s.error && s.data) ? s.data : loadLocal(LS.sessions);
   feedings = (!f.error && f.data) ? f.data : loadLocal(LS.feedings);
+  diapers  = (!dp.error && dp.data) ? dp.data : loadLocal(LS.diapers);
   persistLocal();
 }
 
@@ -531,6 +565,8 @@ function subscribeRealtime(){
       .on('postgres_changes',{event:'*',schema:'public',table:'sleep_sessions',filter:`baby_id=eq.${baby.id}`},
         async ()=>{ await loadData(); renderAll(); })
       .on('postgres_changes',{event:'*',schema:'public',table:'feedings',filter:`baby_id=eq.${baby.id}`},
+        async ()=>{ await loadData(); renderAll(); })
+      .on('postgres_changes',{event:'*',schema:'public',table:'diapers',filter:`baby_id=eq.${baby.id}`},
         async ()=>{ await loadData(); renderAll(); })
       .subscribe();
   }catch(e){}
@@ -670,10 +706,10 @@ function enterApp(){ switchScreen('home'); renderAll(); setInterval(tick,30000);
 let refreshing=false;
 async function doRefresh(){
   if(refreshing) return; refreshing=true;
-  const b=$('refreshBtn'); if(b){ b.disabled=true; b.textContent='…'; }
+  $('ptr').classList.add('on');
   $('syncdot').textContent='↻ actualitzant…';
   try{ await flushQueue(); await loadData(); renderAll(); }catch(e){}
-  if(b){ b.disabled=false; b.textContent='↻'; }
+  $('ptr').classList.remove('on');
   updateSyncDot(); refreshing=false;
 }
 // estira cap avall (amb la pàgina a dalt de tot) per refrescar — funciona a totes les pantalles
@@ -700,12 +736,12 @@ function tick(){
 function renderHome(){
   if(!baby) return;
   $('home-title').textContent = `${baby.name}`;
-  $('home-age').textContent = `${ageLabel()} · finestra de vigília ~${adaptedWW()} min`;
+  $('home-age').textContent = ageLabel();
   const og = ongoing();
   const c = $('statusCircle');
   c.classList.toggle('sleeping', !!og);
   $('st-emoji').textContent = og ? '😴' : '☀️';
-  $('st-label').textContent = og ? (og.kind==='night'?'dormint (nit)':'fent la migdiada') : 'temps despert';
+  $('st-label').textContent = og ? (og.kind==='night'?'dormint (nit)':'fent la migdiada') : `despert · finestra ~${adaptedWW()} min`;
   const btn=$('mainBtn');
   btn.textContent = og ? "☀️ S'ha despertat" : '😴 Comença a dormir';
   btn.classList.toggle('wake', !!og);
@@ -713,8 +749,11 @@ function renderHome(){
   const p = prediction();
   $('pred-nap').textContent = p.nap ? fmtT(p.nap) : '—';
   $('pred-nap-sub').textContent = p.nap ? (p.nap<new Date()?'ja toca!':`d'aquí a ${fmtDur(p.nap-new Date())}`) : (og? 'dormint ara':'avui ja no toca');
-  $('pred-bed').textContent = fmtT(p.bed);
-  $('pred-bed-sub').textContent = "segons l'edat";
+  const lastF = feedings.length? new Date(feedings[feedings.length-1].start_at):null;
+  const gapH = ageWeeks()<14?3:4;
+  const nf = lastF? new Date(lastF.getTime()+gapH*3600000):null;
+  $('pred-feed').textContent = nf? fmtT(nf):'—';
+  $('pred-feed-sub').textContent = nf? (nf<new Date()?'ja toca!':`d'aquí a ${fmtDur(nf-new Date())}`):'registra una presa';
   tick();
 
   const today = mergedItems().filter(it=>dayKey(it.start_at)===dayKey(new Date())).reverse();
@@ -731,12 +770,13 @@ function renderHome(){
 function mergedItems(){
   const a = sessions.map(s=>({...s,_tbl:'sleep_sessions'}));
   const b = feedings.map(f=>({...f,_tbl:'feedings'}));
-  return [...a,...b].sort((x,y)=>x.start_at.localeCompare(y.start_at));
+  const c = diapers.map(x=>({...x,_tbl:'diapers'}));
+  return [...a,...b,...c].sort((x,y)=>x.start_at.localeCompare(y.start_at));
 }
 const LOC={bressol:'🛏️',cotxet:'🚼',cotxe:'🚗',hamaca:'🪑',bracos:'🤱',llit_pares:'🛌',altres:'📍'};
 function fracDonut(p){
   const r=5, c=2*Math.PI*r;
-  return `<svg width="14" height="14" viewBox="0 0 14 14" style="vertical-align:-2px"><circle cx="7" cy="7" r="${r}" fill="none" stroke="rgba(255,255,255,.18)" stroke-width="3"/><circle cx="7" cy="7" r="${r}" fill="none" stroke="var(--feed)" stroke-width="3" stroke-linecap="round" stroke-dasharray="${(c*p).toFixed(1)} ${c.toFixed(1)}" transform="rotate(-90 7 7)"/></svg>`;
+  return `<svg width="14" height="14" viewBox="0 0 14 14" style="vertical-align:-2px"><circle cx="7" cy="7" r="${r}" fill="none" stroke="rgba(255,255,255,.18)" stroke-width="2.4"/><circle cx="7" cy="7" r="${r}" fill="none" stroke="var(--feed)" stroke-width="2.4" stroke-linecap="round" stroke-dasharray="${(c*p).toFixed(1)} ${c.toFixed(1)}" transform="rotate(-90 7 7)"/></svg>`;
 }
 function feedAmounts(f){
   const qi=f.amount_start, qf=f.amount_end;
@@ -745,6 +785,13 @@ function feedAmounts(f){
   return `${qi??'?'} ml`;
 }
 function itemRow(it){
+  if(it._tbl==='diapers'){
+    const what=[it.pee?'💧':null,it.poo?'💩':null].filter(Boolean).join(' ');
+    return `<div class="sess" onclick="openDiaper('${it.id}')">
+      <div><span class="badge diaper">🩲 Bolquer</span></div>
+      <div class="times">${fmtT(it.start_at)}</div>
+      <div class="dur">${what}</div></div>`;
+  }
   if(it._tbl==='feedings'){
     const dur = it.end_at ? fmtDur(new Date(it.end_at)-new Date(it.start_at)) : '';
     const dnt = (it.amount_start>0 && it.amount_end!=null)? ' '+fracDonut(Math.max(0,Math.min(1,(it.amount_start-it.amount_end)/it.amount_start))):'';
@@ -1111,6 +1158,31 @@ async function saveFeed(){
 }
 async function deleteFeed(){ if(feedId){ await dbDelete('feedings',feedId); } closeFeed(); renderAll(); }
 
+/* ───────── Editor de bolquers ───────── */
+let diapId=null;
+function openDiaper(id){
+  diapId=id;
+  const x = id? diapers.find(v=>v.id===id):null;
+  $('dp-title').textContent = x? '🩲 Editar bolquer':'🩲 Canvi de bolquer';
+  $('dp-time').value = x? toLocalInput(x.start_at): toLocalInput(new Date());
+  $('dp-pee').checked = x? !!x.pee : true;
+  $('dp-poo').checked = x? !!x.poo : false;
+  $('dp-del').classList.toggle('hidden',!x);
+  $('dp-msg').innerHTML='';
+  $('diapeditor').showModal();
+}
+function closeDiaper(){ $('diapeditor').close(); }
+async function saveDiaper(){
+  const t=$('dp-time').value, pee=$('dp-pee').checked, poo=$('dp-poo').checked;
+  if(!t) return show('dp-msg',"Falta l'hora",'err');
+  if(!pee&&!poo) return show('dp-msg','Marca pipí, caca o totes dues','err');
+  const payload={start_at:new Date(t).toISOString(), pee, poo};
+  if(diapId) await dbUpdate('diapers',diapId,payload);
+  else await dbInsert('diapers',{id:uuid(), user_id:user?user.id:baby.user_id, baby_id:baby.id, ...payload});
+  closeDiaper(); renderAll();
+}
+async function deleteDiaper(){ if(diapId){ await dbDelete('diapers',diapId); } closeDiaper(); renderAll(); }
+
 /* ───────── Ajustos / export ───────── */
 function renderSettings(){
   if(!baby) return;
@@ -1118,7 +1190,7 @@ function renderSettings(){
   $('acct-info').textContent = user? `Sessió: ${user.email}`:'Mode offline';
 }
 function exportData(){
-  const blob=new Blob([JSON.stringify({baby,sessions,feedings},null,2)],{type:'application/json'});
+  const blob=new Blob([JSON.stringify({baby,sessions,feedings,diapers},null,2)],{type:'application/json'});
   const a=document.createElement('a'); a.href=URL.createObjectURL(blob);
   a.download=`dormilega-export-${dayKey(new Date())}.json`; a.click();
 }
@@ -1126,6 +1198,6 @@ function show(id,txt,cls){ $(id).innerHTML=`<div class="msg ${cls}">${txt}</div>
 
 boot();
 </script>
-<!-- Dormilega v11 -->
+<!-- Dormilega v13 -->
 </body>
 </html>
