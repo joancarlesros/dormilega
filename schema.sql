@@ -12,6 +12,9 @@ create table if not exists public.babies (
   user_id uuid not null references auth.users(id) on delete cascade,
   name text not null,
   birthdate date not null,
+  sex text,                                    -- boy / girl (opcional)
+  feeding text default 'bottle',               -- bottle / breast / mixed
+  formula_factor numeric,                      -- volum final / aigua (per defecte 1,11)
   created_at timestamptz not null default now()
 );
 
@@ -53,8 +56,24 @@ create table if not exists public.diapers (
   created_at timestamptz not null default now()
 );
 
+-- Pes i alçada
+create table if not exists public.measurements (
+  id uuid primary key default gen_random_uuid(),
+  user_id uuid not null references auth.users(id) on delete cascade,
+  baby_id uuid not null references public.babies(id) on delete cascade,
+  start_at timestamptz not null,
+  weight_g integer,                            -- pes en grams
+  height_cm numeric,                           -- alçada en cm
+  notes text,
+  created_at timestamptz not null default now()
+);
+
 -- Actualització des de versions anteriors (idempotent)
 alter table public.sleep_sessions add column if not exists location text;
+alter table public.babies add column if not exists sex text;
+alter table public.babies add column if not exists feeding text default 'bottle';
+alter table public.babies add column if not exists formula_factor numeric;
+alter table public.babies add column if not exists formula_name text;
 
 create index if not exists idx_sessions_baby_start
   on public.sleep_sessions (baby_id, start_at desc);
@@ -62,6 +81,8 @@ create index if not exists idx_feedings_baby_start
   on public.feedings (baby_id, start_at desc);
 create index if not exists idx_diapers_baby_start
   on public.diapers (baby_id, start_at desc);
+create index if not exists idx_measurements_baby_start
+  on public.measurements (baby_id, start_at desc);
 
 -- Seguretat: cada usuari només veu les seves dades
 alter table public.babies enable row level security;
@@ -85,6 +106,11 @@ drop policy if exists "own diapers" on public.diapers;
 create policy "own diapers" on public.diapers
   for all using (auth.uid() = user_id) with check (auth.uid() = user_id);
 
+alter table public.measurements enable row level security;
+drop policy if exists "own measurements" on public.measurements;
+create policy "own measurements" on public.measurements
+  for all using (auth.uid() = user_id) with check (auth.uid() = user_id);
+
 -- Sincronització en temps real entre dispositius (idempotent)
 do $$
 begin
@@ -99,5 +125,9 @@ begin
   if not exists (select 1 from pg_publication_tables
     where pubname='supabase_realtime' and schemaname='public' and tablename='diapers') then
     alter publication supabase_realtime add table public.diapers;
+  end if;
+  if not exists (select 1 from pg_publication_tables
+    where pubname='supabase_realtime' and schemaname='public' and tablename='measurements') then
+    alter publication supabase_realtime add table public.measurements;
   end if;
 end $$;
