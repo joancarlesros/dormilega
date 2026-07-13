@@ -49,9 +49,10 @@
     background:linear-gradient(135deg,#7c6cf0,#a78bfa);box-shadow:0 8px 30px rgba(124,108,240,.4)}
   .bigbtn.wake{background:linear-gradient(135deg,#f59e0b,#fcd34d);color:#3b2f00;
     box-shadow:0 8px 30px rgba(252,211,77,.3)}
-  .feedbtn{background:linear-gradient(135deg,#059669,#34d399);margin:0 0 16px;flex:1}
-  .diapbtn{background:linear-gradient(135deg,#d97706,#fbbf24);color:#3b2600;margin:0 0 16px;flex:1;
-    box-shadow:0 8px 30px rgba(251,191,36,.25)}
+  .feedbtn{background:linear-gradient(135deg,#059669,#34d399);margin:0 0 16px}
+  .diapbtn2{margin:14px 0 2px;padding:14px;font-size:1rem;border-radius:16px;
+    background:linear-gradient(135deg,#db2777,#f472b6);color:#fff;
+    box-shadow:0 6px 20px rgba(236,72,153,.25)}
   #ptr{position:fixed;top:calc(10px + env(safe-area-inset-top));left:50%;transform:translateX(-50%);
     background:var(--card2);border-radius:50%;width:38px;height:38px;display:none;align-items:center;
     justify-content:center;z-index:98;font-size:1.2rem;box-shadow:0 4px 14px rgba(0,0,0,.4)}
@@ -73,7 +74,7 @@
   .badge.nap{background:rgba(167,139,250,.2);color:var(--nap)}
   .badge.night{background:rgba(56,189,248,.18);color:var(--night)}
   .badge.feed{background:rgba(52,211,153,.16);color:var(--feed)}
-  .badge.diaper{background:rgba(251,191,36,.16);color:#fbbf24}
+  .badge.diaper{background:rgba(244,114,182,.16);color:#f9a8d4}
   .sess{display:grid;grid-template-columns:104px 1fr auto;align-items:center;padding:11px 0;gap:8px;
     border-bottom:1px solid rgba(255,255,255,.06)}
   .sess:last-child{border-bottom:none}
@@ -89,6 +90,13 @@
     padding:0 2px;border-radius:12px;height:52px;white-space:nowrap;overflow:hidden}
   nav .tab .ic{font-size:1.3rem;line-height:1.4;height:1.85rem;display:block}
   nav .tab.active{color:var(--accent)}
+  nav .plus{flex:0 0 64px;margin-top:-16px;height:auto;overflow:visible}
+  nav .plus .circ{width:52px;height:52px;border-radius:50%;display:flex;align-items:center;
+    justify-content:center;font-size:1.6rem;color:#fff;font-weight:600;
+    background:linear-gradient(135deg,#7c6cf0,#a78bfa);box-shadow:0 6px 20px rgba(124,108,240,.5)}
+  .sheetgrid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+  .sheetgrid button{padding:18px 10px;font-size:1rem}
+  .badge.measure{background:rgba(125,211,252,.16);color:#7dd3fc}
   .hidden{display:none!important}
   .msg{padding:10px 14px;border-radius:12px;font-size:.88rem;margin:10px 0}
   .msg.err{background:rgba(251,113,133,.15);color:var(--warn)}
@@ -178,6 +186,10 @@
     <input id="baby-name">
     <label>Data de naixement</label>
     <input id="baby-birth" type="date">
+    <div class="grid2">
+      <div><label>Sexe</label><select id="baby-sex"><option value="">—</option><option value="boy">Nen</option><option value="girl">Nena</option></select></div>
+      <div><label>Alimentació</label><select id="baby-feed"><option value="bottle">Biberó (fórmula)</option><option value="breast">Pit</option><option value="mixed">Mixta</option></select></div>
+    </div>
     <div id="baby-msg"></div>
     <br><button onclick="saveBaby()">Desar</button>
   </div>
@@ -196,13 +208,11 @@
     <div class="emoji" id="st-emoji">☀️</div>
     <div class="t" id="st-timer">--:--</div>
     <div class="lbl" id="st-label">despert</div>
+    <div class="lbl" id="st-sub" style="font-size:.68rem"></div>
   </div>
 
   <button class="bigbtn" id="mainBtn" onclick="toggleSleep()">😴 Comença a dormir</button>
-  <div style="display:flex;gap:10px">
-    <button class="bigbtn feedbtn" onclick="openFeed(null)">🍼 Presa</button>
-    <button class="bigbtn diapbtn" onclick="openDiaper(null)">🩲 Bolquer</button>
-  </div>
+  <button class="bigbtn feedbtn" id="feedBtnMain" onclick="openFeed(null)">🍼 Registrar biberó</button>
 
   <div class="pred">
     <div class="card"><div class="lbl">😴 Propera migdiada</div><div class="time" id="pred-nap">--:--</div><div class="lbl" id="pred-nap-sub"></div></div>
@@ -216,11 +226,7 @@
 <!-- ══════ HISTORIAL ══════ -->
 <section id="scr-log" class="screen">
   <div class="row"><h1>Historial</h1>
-    <div style="display:flex;gap:8px">
-      <button class="small" onclick="openEditor(null)">＋ Son</button>
-      <button class="small" style="background:var(--feed);color:#053b2b" onclick="openFeed(null)">＋ Presa</button>
-      <button class="small" style="background:#fbbf24;color:#3b2600" onclick="openDiaper(null)">＋ Bolquer</button>
-    </div></div>
+    <button class="small" onclick="openSheet()">＋ Afegir</button></div>
   <div id="logList"></div>
 </section>
 
@@ -252,6 +258,12 @@
     <div class="kpi"><div class="v" id="k-ml">–</div><div class="l">🥛 ml / dia</div></div>
   </div>
   <div class="chartbox"><h3>🍼 ml per dia</h3><canvas id="ch-feed" height="180"></canvas></div>
+  <h2>⚖️ Creixement</h2>
+  <div class="kpis">
+    <div class="kpi"><div class="v" id="k-weight">–</div><div class="l">⚖️ Últim pes</div></div>
+    <div class="kpi"><div class="v" id="k-target">–</div><div class="l">🎯 Ingesta objectiu / dia</div></div>
+  </div>
+  <div class="chartbox"><h3>⚖️ Pes vs banda OMS P3–P97 (kg)</h3><canvas id="ch-weight" height="200"></canvas></div>
 </section>
 
 <!-- ══════ AJUSTOS ══════ -->
@@ -261,6 +273,14 @@
     <h2 style="margin-top:0">👶 Nadó</h2>
     <label>Nom</label><input id="set-name">
     <label>Data de naixement</label><input id="set-birth" type="date">
+    <div class="grid2">
+      <div><label>Sexe</label><select id="set-sex"><option value="">—</option><option value="boy">Nen</option><option value="girl">Nena</option></select></div>
+      <div><label>Alimentació</label><select id="set-feed"><option value="bottle">Biberó (fórmula)</option><option value="breast">Pit</option><option value="mixed">Mixta</option></select></div>
+    </div>
+    <label>Calibratge de la fórmula: ml finals amb 90 ml d'aigua</label>
+    <input id="set-ffactor" type="number" inputmode="decimal" min="90" max="135" step="1" placeholder="100">
+    <label>Fórmula (marca, opcional)</label>
+    <input id="set-fname" placeholder="p. ex. Suavinex 1">
     <br><button class="small" onclick="updateBaby()">Desar canvis</button>
     <div id="set-msg"></div>
   </div>
@@ -314,7 +334,11 @@
   </div>
   <div class="card">
     <h2 style="margin-top:0">🍼 Alimentació</h2>
-    <p class="sub" style="margin-bottom:0">Ordres de magnitud de guies pediàtriques (AAP/NHS): 8–12 preses/24 h en nounats i ~150 ml per kg i dia amb fórmula; sempre a demanda. Fraccions del biberó: Tot = 100 %, Gairebé tot = 75 %, Meitat = 50 %, Una mica = 25 %; ml presos = preparat × fracció (per defecte, sencer). Tendència: es comparen les dues meitats dels últims 7 dies i es marquen canvis >20 % (brots de creixement típics ~3 i ~6 setmanes i ~3 mesos).</p>
+    <p class="sub" style="margin-bottom:0">Ordres de magnitud de guies pediàtriques (AAP/NHS): 8–12 preses/24 h en nounats i ~150 ml per kg i dia amb fórmula; sempre a demanda. Fraccions del biberó: Tot = 100 %, Gairebé tot = 75 %, Meitat = 50 %, Una mica = 25 %; ml presos = preparat × fracció (per defecte, sencer). Tendència: es comparen les dues meitats dels últims 7 dies i es marquen canvis >20 % (brots de creixement típics ~3 i ~6 setmanes i ~3 mesos). <b>Conversió de fórmula:</b> el volum final ≈ aigua × 1,11 per defecte, perquè la pols desplaça ~3,3 ml per cassó de 30 ml — equivalències: 60→67, 90→100, 120→133, 150→167, 180→200 ml. El factor és calibrable a Ajustos (indica quants ml finals et surten amb 90 ml d'aigua) per si la teva fórmula difereix. El registre demana l'aigua i els ml que queden al biberó; ml presos = volum final − restes. <b>Sexe:</b> es registra però no modifica cap llindar — les referències de son no distingeixen per sexe a aquesta edat, i la ingesta es referencia per pes, no per sexe.</p>
+  </div>
+  <div class="card">
+    <h2 style="margin-top:0">⚖️ Creixement</h2>
+    <p class="sub" style="margin-bottom:0">El pes es compara amb la banda P3–P97 dels estàndards de creixement de l'OMS (2006), amb valors mensuals aproximats per sexe — la valoració fina de percentils és feina del pediatre. La ingesta objectiu amb fórmula es calcula com ~150 ml per kg i dia sobre l'últim pes registrat, i les recomanacions d'alimentació la comparen amb els ml reals dels últims 7 dies.</p>
   </div>
   <div class="card">
     <h2 style="margin-top:0">🧮 Índex de son (0–100)</h2>
@@ -335,6 +359,7 @@
 <nav id="mainNav" class="hidden">
   <button class="tab active" data-scr="home" onclick="go('home')"><span class="ic">🌙</span>Avui</button>
   <button class="tab" data-scr="log" onclick="go('log')"><span class="ic">📋</span>Historial</button>
+  <button class="tab plus" onclick="openSheet()"><span class="circ">＋</span></button>
   <button class="tab" data-scr="stats" onclick="go('stats')"><span class="ic">📈</span>Estadístiques</button>
   <button class="tab" data-scr="settings" onclick="go('settings')"><span class="ic">⚙️</span>Ajustos</button>
 </nav>
@@ -366,18 +391,19 @@
 <!-- ══════ EDITOR PRESA ══════ -->
 <dialog id="feeditor">
   <h2 style="margin-top:0" id="fd-title">Registre de presa</h2>
-  <label>Hora d'inici</label><input id="fd-start" type="datetime-local">
-  <label>Hora de fi (opcional)</label><input id="fd-end" type="datetime-local">
-  <div class="grid2">
-    <div><label>Biberó preparat (ml)</label><input id="fd-qini" type="number" inputmode="decimal" min="0" step="5" placeholder="120"></div>
-    <div><label>Quant n'ha pres?</label><select id="fd-frac">
-      <option value="1">Tot (100%)</option>
-      <option value="0.75">Gairebé tot (75%)</option>
-      <option value="0.5">La meitat (50%)</option>
-      <option value="0.25">Una mica (25%)</option>
-    </select></div>
+  <div id="fd-typewrap">
+    <label>Tipus</label>
+    <select id="fd-type" onchange="updFeedUI()"><option value="bottle">🍼 Biberó</option><option value="breast">🤱 Pit</option></select>
   </div>
-  <p class="sub" style="margin:8px 0 0">Els ml presos es calculen sols (biberó × fracció). Per defecte s'assumeix que se l'acaba tot.</p>
+  <label>Hora d'inici</label><input id="fd-start" type="datetime-local">
+  <div id="fd-endwrap"><label>Hora de fi</label><input id="fd-end" type="datetime-local"></div>
+  <div id="fd-bottlefields">
+    <div class="grid2">
+      <div><label>Aigua (ml)</label><input id="fd-qini" type="number" inputmode="decimal" min="0" step="5" placeholder="90" oninput="updConv()"></div>
+      <div><label>En queden (ml)</label><input id="fd-qleft" type="number" inputmode="decimal" min="0" step="5" placeholder="0"></div>
+    </div>
+    <p class="sub" id="fd-conv" style="margin:8px 0 0"></p>
+  </div>
   <div id="fd-msg"></div>
   <div class="modal-actions">
     <button class="secondary" onclick="closeFeed()">Cancel·lar</button>
@@ -386,9 +412,37 @@
   <br><button id="fd-del" class="danger hidden" onclick="deleteFeed()">Eliminar registre</button>
 </dialog>
 
+<!-- ══════ MENÚ AFEGIR (＋) ══════ -->
+<dialog id="sheet">
+  <h2 style="margin-top:0">Afegir registre</h2>
+  <div class="sheetgrid">
+    <button class="secondary" onclick="closeSheet();openEditor(null)">😴 Son</button>
+    <button class="secondary" onclick="closeSheet();openFeed(null)">🍼 Presa</button>
+    <button class="secondary" onclick="closeSheet();openDiaper(null)">🚼 Bolquer</button>
+    <button class="secondary" onclick="closeSheet();openMeasure(null)">⚖️ Pes i alçada</button>
+  </div>
+  <br><button class="secondary" onclick="closeSheet()">Cancel·lar</button>
+</dialog>
+
+<!-- ══════ EDITOR MESURA ══════ -->
+<dialog id="measeditor">
+  <h2 style="margin-top:0" id="ms-title">⚖️ Pes i alçada</h2>
+  <label>Data</label><input id="ms-time" type="datetime-local">
+  <div class="grid2">
+    <div><label>Pes (kg)</label><input id="ms-weight" type="number" inputmode="decimal" min="0" step="0.01" placeholder="4.35"></div>
+    <div><label>Alçada (cm)</label><input id="ms-height" type="number" inputmode="decimal" min="0" step="0.5" placeholder="54"></div>
+  </div>
+  <div id="ms-msg"></div>
+  <div class="modal-actions">
+    <button class="secondary" onclick="closeMeasure()">Cancel·lar</button>
+    <button onclick="saveMeasure()">Desar</button>
+  </div>
+  <br><button id="ms-del" class="danger hidden" onclick="deleteMeasure()">Eliminar registre</button>
+</dialog>
+
 <!-- ══════ EDITOR BOLQUER ══════ -->
 <dialog id="diapeditor">
-  <h2 style="margin-top:0" id="dp-title">🩲 Canvi de bolquer</h2>
+  <h2 style="margin-top:0" id="dp-title">🚼 Canvi de bolquer</h2>
   <label>Hora</label><input id="dp-time" type="datetime-local">
   <div class="grid2" style="margin-top:14px">
     <label style="display:flex;align-items:center;gap:8px;margin:0;font-size:1rem;color:var(--text)"><input type="checkbox" id="dp-pee" style="width:auto"> 💧 Pipí</label>
@@ -409,12 +463,13 @@
    Dades: Supabase (gratuït) · Offline: localStorage + cua de sync
    ════════════════════════════════════════════════════════════════ */
 
-const LS = { cfg:'dl_cfg', baby:'dl_baby', sessions:'dl_sessions', feedings:'dl_feedings', diapers:'dl_diapers', queue:'dl_queue' };
+const LS = { cfg:'dl_cfg', baby:'dl_baby', sessions:'dl_sessions', feedings:'dl_feedings', diapers:'dl_diapers', measures:'dl_measures', queue:'dl_queue' };
 let sb = null, user = null, baby = null;
 let sessions = [];   // son (30 dies), ordre asc per start_at
 let feedings = [];   // preses (30 dies), ordre asc per start_at
 let diapers  = [];   // bolquers (30 dies), ordre asc per start_at
-let charts = {}, notifTimer = null, feedTimer = null;
+let measures = [];   // pes/alçada (tot l'històric), ordre asc per start_at
+let charts = {}, notifTimer = null, feedTimer = null, lastSync = null;
 
 const $ = id => document.getElementById(id);
 const uuid = () => (crypto.randomUUID ? crypto.randomUUID() :
@@ -463,7 +518,7 @@ async function boot(){
   if (!session){
     if (!navigator.onLine && localStorage.getItem(LS.baby)){
       baby = JSON.parse(localStorage.getItem(LS.baby));
-      sessions = loadLocal(LS.sessions); feedings = loadLocal(LS.feedings); diapers = loadLocal(LS.diapers);
+      sessions = loadLocal(LS.sessions); feedings = loadLocal(LS.feedings); diapers = loadLocal(LS.diapers); measures = loadLocal(LS.measures);
       return enterApp();
     }
     return switchScreen('auth');
@@ -486,7 +541,7 @@ async function doLogin(){
   user = data.user; afterLogin();
 }
 async function doLogout(){ await sb.auth.signOut();
-  [LS.baby,LS.sessions,LS.feedings,LS.diapers].forEach(k=>localStorage.removeItem(k)); location.reload(); }
+  [LS.baby,LS.sessions,LS.feedings,LS.diapers,LS.measures].forEach(k=>localStorage.removeItem(k)); location.reload(); }
 
 async function afterLogin(){
   const {data:babies} = await sb.from('babies').select('*').limit(1);
@@ -502,17 +557,24 @@ async function afterLogin(){
 async function saveBaby(){
   const name=$('baby-name').value.trim(), birth=$('baby-birth').value;
   if(!name||!birth) return show('baby-msg','Omple el nom i la data','err');
-  const {data,error} = await sb.from('babies').insert({user_id:user.id,name,birthdate:birth}).select().single();
+  const {data,error} = await sb.from('babies').insert({user_id:user.id,name,birthdate:birth,
+    sex:$('baby-sex').value||null, feeding:$('baby-feed').value}).select().single();
   if(error) return show('baby-msg',error.message,'err');
   baby=data; localStorage.setItem(LS.baby, JSON.stringify(baby));
   await loadData(); subscribeRealtime(); enterApp();
 }
 async function updateBaby(){
   const name=$('set-name').value.trim(), birth=$('set-birth').value;
+  const sex=$('set-sex').value||null, feeding=$('set-feed').value;
+  const ffv=$('set-ffactor').value;
+  const formula_factor = ffv? Math.min(1.5, Math.max(1, Number(ffv)/90)) : null;
+  const formula_name = $('set-fname').value.trim()||null;
   if(!name||!birth) return show('set-msg','Omple el nom i la data','err');
-  const {error} = await sb.from('babies').update({name,birthdate:birth}).eq('id',baby.id);
+  const {error} = await sb.from('babies').update({name,birthdate:birth,sex,feeding,formula_factor,formula_name}).eq('id',baby.id);
   if(error) return show('set-msg',error.message,'err');
-  baby.name=name; baby.birthdate=birth; localStorage.setItem(LS.baby, JSON.stringify(baby));
+  baby.name=name; baby.birthdate=birth; baby.sex=sex; baby.feeding=feeding;
+  baby.formula_factor=formula_factor; baby.formula_name=formula_name;
+  localStorage.setItem(LS.baby, JSON.stringify(baby));
   show('set-msg','Desat ✓','ok'); renderAll();
 }
 
@@ -522,20 +584,24 @@ function persistLocal(){
   localStorage.setItem(LS.sessions, JSON.stringify(sessions));
   localStorage.setItem(LS.feedings, JSON.stringify(feedings));
   localStorage.setItem(LS.diapers, JSON.stringify(diapers));
+  localStorage.setItem(LS.measures, JSON.stringify(measures));
 }
-function arrFor(tbl){ return tbl==='feedings' ? feedings : tbl==='diapers' ? diapers : sessions; }
-function setArr(tbl, a){ if(tbl==='feedings') feedings=a; else if(tbl==='diapers') diapers=a; else sessions=a; }
+function arrFor(tbl){ return tbl==='feedings' ? feedings : tbl==='diapers' ? diapers : tbl==='measurements' ? measures : sessions; }
+function setArr(tbl, a){ if(tbl==='feedings') feedings=a; else if(tbl==='diapers') diapers=a; else if(tbl==='measurements') measures=a; else sessions=a; }
 
 async function loadData(){
   const since = new Date(Date.now()-30*864e5).toISOString();
-  const [s,f,dp] = await Promise.all([
+  const [s,f,dp,ms] = await Promise.all([
     sb.from('sleep_sessions').select('*').eq('baby_id',baby.id).gte('start_at',since).order('start_at',{ascending:true}),
     sb.from('feedings').select('*').eq('baby_id',baby.id).gte('start_at',since).order('start_at',{ascending:true}),
-    sb.from('diapers').select('*').eq('baby_id',baby.id).gte('start_at',since).order('start_at',{ascending:true})
+    sb.from('diapers').select('*').eq('baby_id',baby.id).gte('start_at',since).order('start_at',{ascending:true}),
+    sb.from('measurements').select('*').eq('baby_id',baby.id).order('start_at',{ascending:true})
   ]);
   sessions = (!s.error && s.data) ? s.data : loadLocal(LS.sessions);
   feedings = (!f.error && f.data) ? f.data : loadLocal(LS.feedings);
   diapers  = (!dp.error && dp.data) ? dp.data : loadLocal(LS.diapers);
+  measures = (!ms.error && ms.data) ? ms.data : loadLocal(LS.measures);
+  if(!s.error) lastSync = new Date();
   persistLocal();
 }
 
@@ -556,7 +622,8 @@ async function flushQueue(){
 }
 function updateSyncDot(){
   const n=getQueue().length;
-  $('syncdot').textContent = n ? `⏳ ${n} per sincronitzar` : '☁️ sincronitzat';
+  $('syncdot').innerHTML = n ? `⏳ ${n} per sincronitzar`
+    : (lastSync ? `<span style="color:var(--ok)">✓</span> actualitzat ${fmtT(lastSync)}` : '—');
 }
 
 function subscribeRealtime(){
@@ -567,6 +634,8 @@ function subscribeRealtime(){
       .on('postgres_changes',{event:'*',schema:'public',table:'feedings',filter:`baby_id=eq.${baby.id}`},
         async ()=>{ await loadData(); renderAll(); })
       .on('postgres_changes',{event:'*',schema:'public',table:'diapers',filter:`baby_id=eq.${baby.id}`},
+        async ()=>{ await loadData(); renderAll(); })
+      .on('postgres_changes',{event:'*',schema:'public',table:'measurements',filter:`baby_id=eq.${baby.id}`},
         async ()=>{ await loadData(); renderAll(); })
       .subscribe();
   }catch(e){}
@@ -740,11 +809,14 @@ function renderHome(){
   const og = ongoing();
   const c = $('statusCircle');
   c.classList.toggle('sleeping', !!og);
-  $('st-emoji').textContent = og ? '😴' : '☀️';
-  $('st-label').textContent = og ? (og.kind==='night'?'dormint (nit)':'fent la migdiada') : `despert · finestra ~${adaptedWW()} min`;
+  $('st-emoji').textContent = og ? '😴' : (baby.sex==='girl'?'👧':baby.sex==='boy'?'👦':'☀️');
+  $('st-label').textContent = og ? (og.kind==='night'?'dormint (nit)':'fent la migdiada') : 'despert';
+  $('st-sub').textContent = og ? '' : `finestra ~${adaptedWW()} min`;
   const btn=$('mainBtn');
   btn.textContent = og ? "☀️ S'ha despertat" : '😴 Comença a dormir';
   btn.classList.toggle('wake', !!og);
+  const fm=baby.feeding||'bottle';
+  $('feedBtnMain').textContent = fm==='breast'?'🤱 Registrar pit': fm==='mixed'?'🍼 Registrar presa':'🍼 Registrar biberó';
 
   const p = prediction();
   $('pred-nap').textContent = p.nap ? fmtT(p.nap) : '—';
@@ -771,9 +843,10 @@ function mergedItems(){
   const a = sessions.map(s=>({...s,_tbl:'sleep_sessions'}));
   const b = feedings.map(f=>({...f,_tbl:'feedings'}));
   const c = diapers.map(x=>({...x,_tbl:'diapers'}));
-  return [...a,...b,...c].sort((x,y)=>x.start_at.localeCompare(y.start_at));
+  const e = measures.map(x=>({...x,_tbl:'measurements'}));
+  return [...a,...b,...c,...e].sort((x,y)=>x.start_at.localeCompare(y.start_at));
 }
-const LOC={bressol:'🛏️',cotxet:'🚼',cotxe:'🚗',hamaca:'🪑',bracos:'🤱',llit_pares:'🛌',altres:'📍'};
+const LOC={bressol:'🛏️',cotxet:'🛒',cotxe:'🚗',hamaca:'🪑',bracos:'🤱',llit_pares:'👨‍👩‍👦',altres:'📍'};
 function fracDonut(p){
   const r=5, c=2*Math.PI*r;
   return `<svg width="14" height="14" viewBox="0 0 14 14" style="vertical-align:-2px"><circle cx="7" cy="7" r="${r}" fill="none" stroke="rgba(255,255,255,.18)" stroke-width="2.4"/><circle cx="7" cy="7" r="${r}" fill="none" stroke="var(--feed)" stroke-width="2.4" stroke-linecap="round" stroke-dasharray="${(c*p).toFixed(1)} ${c.toFixed(1)}" transform="rotate(-90 7 7)"/></svg>`;
@@ -785,26 +858,35 @@ function feedAmounts(f){
   return `${qi??'?'} ml`;
 }
 function itemRow(it){
+  if(it._tbl==='measurements'){
+    const parts=[it.weight_g? (it.weight_g/1000).toFixed(2).replace('.',',')+' kg':null,
+                 it.height_cm? it.height_cm+' cm':null].filter(Boolean).join(' · ');
+    return `<div class="sess" onclick="openMeasure('${it.id}')">
+      <div><span class="badge measure">⚖️ Mesura</span></div>
+      <div class="times">${fmtT(it.start_at)}</div>
+      <div class="dur">${parts}</div></div>`;
+  }
   if(it._tbl==='diapers'){
     const what=[it.pee?'💧':null,it.poo?'💩':null].filter(Boolean).join(' ');
     return `<div class="sess" onclick="openDiaper('${it.id}')">
-      <div><span class="badge diaper">🩲 Bolquer</span></div>
+      <div><span class="badge diaper">🚼 Bolquer</span></div>
       <div class="times">${fmtT(it.start_at)}</div>
       <div class="dur">${what}</div></div>`;
   }
   if(it._tbl==='feedings'){
     const dur = it.end_at ? fmtDur(new Date(it.end_at)-new Date(it.start_at)) : '';
     const dnt = (it.amount_start>0 && it.amount_end!=null)? ' '+fracDonut(Math.max(0,Math.min(1,(it.amount_start-it.amount_end)/it.amount_start))):'';
+    const isBottle = it.amount_start!=null || ((baby&&baby.feeding)||'bottle')==='bottle';
     return `<div class="sess" onclick="openFeed('${it.id}')">
-      <div><span class="badge feed">🍼 Presa</span></div>
+      <div><span class="badge feed">${isBottle?'🍼 Biberó':'🤱 Pit'}</span></div>
       <div class="times">${fmtT(it.start_at)}${it.end_at?` – ${fmtT(it.end_at)}`:''}</div>
       <div class="dur">${feedAmounts(it)}${dnt}${dur?`<br>${dur}`:''}</div></div>`;
   }
   const dur = it.end_at ? fmtDur(new Date(it.end_at)-new Date(it.start_at)) : 'en curs…';
   return `<div class="sess" onclick="openEditor('${it.id}')">
     <div><span class="badge ${it.kind}">${it.kind==='nap'?'😴 Migdiada':'🌙 Nit'}</span></div>
-    <div class="times">${fmtT(it.start_at)} – ${it.end_at?fmtT(it.end_at):'···'}${it.location?' '+(LOC[it.location]||''):''}</div>
-    <div class="dur">${dur}</div></div>`;
+    <div class="times">${fmtT(it.start_at)} – ${it.end_at?fmtT(it.end_at):'···'}</div>
+    <div class="dur">${dur}${it.location?' '+(LOC[it.location]||''):''}</div></div>`;
 }
 
 function renderLog(){
@@ -1006,6 +1088,21 @@ function buildInsights(){
     else push('🌜','ok',`Preses nocturnes: ${nfAvg.toFixed(1)}/nit`,
       'Ben alineat amb la consolidació del son nocturn.');
   }
+  // 8b2) Ingesta vs objectiu per pes (150 ml/kg/dia)
+  const wmI = measures.filter(m=>m.weight_g);
+  if(wmI.length && fAct.length>=3){
+    const mlAvgI = fAct.reduce((a,k)=>a+D.feedMl[k],0)/fAct.length;
+    if(mlAvgI>0){
+      const tgt = wmI[wmI.length-1].weight_g/1000*150;
+      const r = mlAvgI/tgt;
+      if(r<0.75){ score-=8; push('🎯','warn',`Ingesta ${Math.round(mlAvgI)} ml/dia vs objectiu ~${Math.round(tgt)}`,
+        'Per sota del 75% de la referència (~150 ml/kg/dia amb fórmula). Si també hi ha menys bolquers molls o més irritabilitat, consulta el pediatre. Recorda registrar totes les preses.'); }
+      else if(r>1.25) push('🎯','info',`Ingesta ${Math.round(mlAvgI)} ml/dia vs objectiu ~${Math.round(tgt)}`,
+        'Per sobre del 125% de la referència. En brots de creixement és normal uns dies; si és sostingut, comenta-ho a la revisió.');
+      else push('🎯','ok',`Ingesta en objectiu: ${Math.round(mlAvgI)} ml/dia (~${Math.round(tgt)})`,
+        `Alineada amb ~150 ml/kg/dia per als ${(wmI[wmI.length-1].weight_g/1000).toFixed(2).replace('.',',')} kg actuals.`);
+    }
+  }
   // 8c) S'ho acaba sempre tot?
   const bots = feedings.filter(f=>new Date(f.start_at)>Date.now()-7*864e5 && f.amount_start!=null && f.amount_end!=null);
   if(bots.length>=5){
@@ -1017,7 +1114,7 @@ function buildInsights(){
   return {ins, score};
 }
 
-const ALIM_E=['🍼','📉','🌜','➕'];
+const ALIM_E=['🍼','📉','🌜','➕','🎯'];
 function renderInsights(){
   const {ins,score}=buildInsights();
   const sc=$('sleepScore');
@@ -1091,6 +1188,36 @@ function renderStats(){
 
   mkChart('ch-feed',{type:'bar',data:{labels:lbl,datasets:[{label:'ml consumits',
     data:days.map(k=>feedMl[k]),backgroundColor:'#34d399'}]},options:common});
+
+  // ── creixement: pes vs banda de referència OMS (aprox.) ──
+  const WHO_W = {   // pes-per-edat en kg, mesos 0..12, valors aproximats dels estàndards OMS 2006
+    boy:{ p3:[2.5,3.4,4.4,5.1,5.6,6.1,6.4,6.7,7.0,7.2,7.5,7.7,7.8],
+          p50:[3.3,4.5,5.6,6.4,7.0,7.5,7.9,8.3,8.6,8.9,9.2,9.4,9.6],
+          p97:[4.3,5.7,7.0,7.9,8.6,9.2,9.7,10.2,10.5,10.9,11.2,11.5,11.8] },
+    girl:{ p3:[2.4,3.2,4.0,4.6,5.1,5.5,5.8,6.1,6.3,6.6,6.8,7.0,7.1],
+           p50:[3.2,4.2,5.1,5.8,6.4,6.9,7.3,7.6,7.9,8.2,8.5,8.7,8.9],
+           p97:[4.2,5.4,6.5,7.4,8.1,8.7,9.2,9.6,10.0,10.4,10.7,11.0,11.3] }
+  };
+  const wm = measures.filter(m=>m.weight_g);
+  const lastW = wm.length? wm[wm.length-1] : null;
+  $('k-weight').textContent = lastW? (lastW.weight_g/1000).toFixed(2).replace('.',',')+' kg' : '–';
+  $('k-target').textContent = lastW? Math.round(lastW.weight_g/1000*150)+' ml' : '–';
+  const birth = new Date(baby.birthdate+'T00:00');
+  const pts = wm.map(m=>({x:+(((new Date(m.start_at)-birth)/(30.44*864e5)).toFixed(2)), y:+(m.weight_g/1000).toFixed(2)}));
+  const ref = WHO_W[baby.sex==='girl'?'girl':'boy'];
+  const months=[...Array(13).keys()];
+  const refLine=(arr,col,fill)=>({label:'', data:months.map(m=>({x:m,y:arr[m]})), borderColor:col,
+    backgroundColor:fill||'transparent', pointRadius:0, borderWidth:1, fill:fill?'-1':false, tension:.3});
+  mkChart('ch-weight',{type:'line',data:{datasets:[
+    {...refLine(ref.p3,'rgba(157,156,199,.5)'), label:'P3'},
+    {...refLine(ref.p97,'rgba(157,156,199,.5)','rgba(157,156,199,.08)'), label:'P97'},
+    {...refLine(ref.p50,'rgba(157,156,199,.9)'), label:'P50'},
+    {label:baby.name, data:pts, borderColor:'#fcd34d', backgroundColor:'#fcd34d',
+     pointRadius:4, borderWidth:2, tension:.2}]},
+    options:{responsive:true, plugins:{legend:{labels:{color:'#9d9cc7',boxWidth:12,
+      filter:i=>['P50',baby.name].includes(i.text)}}},
+      scales:{x:{type:'linear',min:0,max:12,ticks:{color:'#9d9cc7',stepSize:1,callback:v=>v+' m'},grid:{color:'rgba(255,255,255,.05)'}},
+              y:{ticks:{color:'#9d9cc7'},grid:{color:'rgba(255,255,255,.07)'}}}}});
 }
 function mkChart(id,cfg){ if(charts[id]) charts[id].destroy(); charts[id]=new Chart($(id).getContext('2d'),cfg); }
 
@@ -1131,26 +1258,47 @@ function openFeed(id){
   $('fd-title').textContent = f? 'Editar presa':'Registrar presa';
   $('fd-start').value = f? toLocalInput(f.start_at): toLocalInput(new Date());
   $('fd-end').value = f&&f.end_at? toLocalInput(f.end_at):'';
-  $('fd-qini').value = f&&f.amount_start!=null? f.amount_start:'';
-  let frac='1';
-  if(f && f.amount_start>0 && f.amount_end!=null){
-    const c=1-(f.amount_end/f.amount_start);
-    frac=[1,0.75,0.5,0.25].reduce((a,b)=>Math.abs(b-c)<Math.abs(a-c)?b:a);
-  }
-  $('fd-frac').value=String(frac);
+  $('fd-type').value = f ? (f.amount_start!=null?'bottle':'breast') : 'bottle';
+  $('fd-qini').value = f&&f.amount_start!=null? Math.round(f.amount_start/ffactor()/5)*5 : '';
+  $('fd-qleft').value = f&&f.amount_end? f.amount_end : '';
+  updFeedUI();
   $('fd-del').classList.toggle('hidden',!f);
   $('fd-msg').innerHTML='';
   $('feeditor').showModal();
 }
 function closeFeed(){ $('feeditor').close(); }
+function ffactor(){ return (baby&&baby.formula_factor)? Number(baby.formula_factor) : 10/9; }
+function feedType(){ const m=(baby&&baby.feeding)||'bottle'; return m==='mixed'? $('fd-type').value : m; }
+function updFeedUI(){
+  const m=(baby&&baby.feeding)||'bottle';
+  $('fd-typewrap').style.display = m==='mixed'? '':'none';
+  const t=feedType();
+  $('fd-bottlefields').style.display = t==='bottle'? '':'none';
+  $('fd-endwrap').style.display = t==='breast'? '':'none';
+  updConv();
+}
+function updConv(){
+  const w=$('fd-qini').value;
+  $('fd-conv').textContent = w===''? `Indica l'aigua i calculo el volum final (aigua × ${ffactor().toFixed(2)}).` :
+    `≈ ${Math.round(Number(w)*ffactor())} ml de biberó un cop afegida la fórmula`;
+}
 async function saveFeed(){
   const start=$('fd-start').value, end=$('fd-end').value;
-  const qi=$('fd-qini').value, fr=$('fd-frac').value;
   if(!start) return show('fd-msg',"Falta l'hora d'inici",'err');
   if(end && new Date(end)<=new Date(start)) return show('fd-msg','El final ha de ser posterior a l\'inici','err');
-  const ai = qi===''? null: Number(qi);
-  const af = ai!=null? Math.round(ai*(1-Number(fr||1))) : null;
-  const payload={ start_at:new Date(start).toISOString(), end_at: end? new Date(end).toISOString():null,
+  const t=feedType();
+  let ai=null, af=null, endAt=null;
+  if(t==='bottle'){
+    const w=$('fd-qini').value;
+    if(w!==''){
+      ai=Math.round(Number(w)*ffactor());                  // aigua × factor (desplaçament de la pols)
+      const left=$('fd-qleft').value;
+      af=Math.min(ai, left===''?0:Number(left));           // buit = se l'ha acabat tot
+    }
+  } else {
+    endAt = end? new Date(end).toISOString() : null;       // la durada només té sentit amb pit
+  }
+  const payload={ start_at:new Date(start).toISOString(), end_at:endAt,
     amount_start:ai, amount_end:af };
   if(feedId) await dbUpdate('feedings',feedId,payload);
   else await dbInsert('feedings',{id:uuid(), user_id:user?user.id:baby.user_id, baby_id:baby.id, ...payload});
@@ -1163,7 +1311,7 @@ let diapId=null;
 function openDiaper(id){
   diapId=id;
   const x = id? diapers.find(v=>v.id===id):null;
-  $('dp-title').textContent = x? '🩲 Editar bolquer':'🩲 Canvi de bolquer';
+  $('dp-title').textContent = x? '🚼 Editar bolquer':'🚼 Canvi de bolquer';
   $('dp-time').value = x? toLocalInput(x.start_at): toLocalInput(new Date());
   $('dp-pee').checked = x? !!x.pee : true;
   $('dp-poo').checked = x? !!x.poo : false;
@@ -1183,14 +1331,46 @@ async function saveDiaper(){
 }
 async function deleteDiaper(){ if(diapId){ await dbDelete('diapers',diapId); } closeDiaper(); renderAll(); }
 
+/* ───────── Menú ＋ i editor de mesures ───────── */
+function openSheet(){ $('sheet').showModal(); }
+function closeSheet(){ $('sheet').close(); }
+let measId=null;
+function openMeasure(id){
+  measId=id;
+  const x = id? measures.find(v=>v.id===id):null;
+  $('ms-title').textContent = x? '⚖️ Editar mesura':'⚖️ Pes i alçada';
+  $('ms-time').value = x? toLocalInput(x.start_at): toLocalInput(new Date());
+  $('ms-weight').value = x&&x.weight_g? (x.weight_g/1000):'';
+  $('ms-height').value = x&&x.height_cm? x.height_cm:'';
+  $('ms-del').classList.toggle('hidden',!x);
+  $('ms-msg').innerHTML='';
+  $('measeditor').showModal();
+}
+function closeMeasure(){ $('measeditor').close(); }
+async function saveMeasure(){
+  const t=$('ms-time').value, w=$('ms-weight').value, h=$('ms-height').value;
+  if(!t) return show('ms-msg','Falta la data','err');
+  if(w===''&&h==='') return show('ms-msg','Indica pes, alçada o tots dos','err');
+  const payload={start_at:new Date(t).toISOString(),
+    weight_g: w===''? null: Math.round(Number(w)*1000),
+    height_cm: h===''? null: Number(h)};
+  if(measId) await dbUpdate('measurements',measId,payload);
+  else await dbInsert('measurements',{id:uuid(), user_id:user?user.id:baby.user_id, baby_id:baby.id, ...payload});
+  closeMeasure(); renderAll();
+}
+async function deleteMeasure(){ if(measId){ await dbDelete('measurements',measId); } closeMeasure(); renderAll(); }
+
 /* ───────── Ajustos / export ───────── */
 function renderSettings(){
   if(!baby) return;
   $('set-name').value=baby.name; $('set-birth').value=baby.birthdate;
+  $('set-sex').value=baby.sex||''; $('set-feed').value=baby.feeding||'bottle';
+  $('set-ffactor').value=Math.round(90*ffactor());
+  $('set-fname').value=baby.formula_name||'';
   $('acct-info').textContent = user? `Sessió: ${user.email}`:'Mode offline';
 }
 function exportData(){
-  const blob=new Blob([JSON.stringify({baby,sessions,feedings,diapers},null,2)],{type:'application/json'});
+  const blob=new Blob([JSON.stringify({baby,sessions,feedings,diapers,measures},null,2)],{type:'application/json'});
   const a=document.createElement('a'); a.href=URL.createObjectURL(blob);
   a.download=`dormilega-export-${dayKey(new Date())}.json`; a.click();
 }
@@ -1198,6 +1378,6 @@ function show(id,txt,cls){ $(id).innerHTML=`<div class="msg ${cls}">${txt}</div>
 
 boot();
 </script>
-<!-- Dormilega v13 -->
+<!-- Dormilega v18 -->
 </body>
 </html>
