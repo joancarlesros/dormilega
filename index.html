@@ -66,7 +66,7 @@
   .badge.nap{background:rgba(167,139,250,.2);color:var(--nap)}
   .badge.night{background:rgba(56,189,248,.18);color:var(--night)}
   .badge.feed{background:rgba(52,211,153,.16);color:var(--feed)}
-  .sess{display:grid;grid-template-columns:88px 1fr auto;align-items:center;padding:11px 0;gap:8px;
+  .sess{display:grid;grid-template-columns:104px 1fr auto;align-items:center;padding:11px 0;gap:8px;
     border-bottom:1px solid rgba(255,255,255,.06)}
   .sess:last-child{border-bottom:none}
   .sess .times{font-weight:600;font-variant-numeric:tabular-nums}
@@ -111,6 +111,9 @@
   .inssum .l{font-size:.62rem;color:var(--muted);margin-top:2px}
   .inshdr{margin:16px 0 2px;font-size:.78rem;font-weight:700;text-transform:uppercase;letter-spacing:.06em}
   .inshdr.hson{color:var(--accent)} .inshdr.halim{color:var(--feed)}
+  .daytotals{display:flex;gap:8px;margin-top:10px}
+  .daytotals .chip{flex:1;background:var(--card);border-radius:14px;padding:9px 6px;text-align:center;font-weight:700;font-size:.92rem}
+  .daytotals .chip small{display:block;color:var(--muted);font-weight:500;font-size:.64rem;margin-top:2px}
   dialog{border:none;border-radius:20px;background:var(--card);color:var(--text);
     width:min(92vw,420px);padding:20px}
   dialog::backdrop{background:rgba(0,0,0,.6)}
@@ -181,6 +184,8 @@
     </div>
   </div>
 
+  <div class="daytotals" id="dayTotals"></div>
+
   <div class="statuscircle" id="statusCircle">
     <div class="emoji" id="st-emoji">☀️</div>
     <div class="t" id="st-timer">--:--</div>
@@ -219,20 +224,24 @@
     <div id="insightsList"></div>
     <p class="sub" style="margin:12px 0 0;font-size:.7rem">Heurístiques calculades amb les teves dades i rangs de referència publicats (National Sleep Foundation, AAP). No és consell mèdic: davant de qualsevol dubte, pediatre.</p>
   </div>
+  <h2>😴 Son</h2>
   <div class="kpis">
-    <div class="kpi"><div class="v" id="k-total">–</div><div class="l">Son mitjà / dia</div></div>
-    <div class="kpi"><div class="v" id="k-naps">–</div><div class="l">Migdiades / dia</div></div>
-    <div class="kpi"><div class="v" id="k-ww">–</div><div class="l">Finestra de vigília mitjana</div></div>
-    <div class="kpi"><div class="v" id="k-wakes">–</div><div class="l">Despertars nocturns / nit</div></div>
-    <div class="kpi"><div class="v" id="k-feeds">–</div><div class="l">Preses / dia</div></div>
-    <div class="kpi"><div class="v" id="k-ml">–</div><div class="l">ml / dia</div></div>
+    <div class="kpi"><div class="v" id="k-total">–</div><div class="l">😴 Son mitjà / dia</div></div>
+    <div class="kpi"><div class="v" id="k-naps">–</div><div class="l">☀️ Migdiades / dia</div></div>
+    <div class="kpi"><div class="v" id="k-ww">–</div><div class="l">⏱️ Finestra de vigília</div></div>
+    <div class="kpi"><div class="v" id="k-wakes">–</div><div class="l">🌙 Despertars / nit</div></div>
   </div>
-  <div class="chartbox"><h3>Hores de son per dia</h3><canvas id="ch-sleep" height="200"></canvas></div>
-  <div class="chartbox"><h3>Hora de despertar i d'anar al llit</h3><canvas id="ch-bedwake" height="180"></canvas></div>
-  <div class="chartbox"><h3>Finestra de vigília mitjana (min)</h3><canvas id="ch-ww" height="180"></canvas></div>
-  <div class="chartbox"><h3>Despertars nocturns</h3><canvas id="ch-wakes" height="180"></canvas></div>
-  <div class="chartbox"><h3>Repartiment dia / nit (14 dies)</h3><canvas id="ch-daynight" height="200"></canvas></div>
-  <div class="chartbox"><h3>Alimentació (ml per dia)</h3><canvas id="ch-feed" height="180"></canvas></div>
+  <div class="chartbox"><h3>😴 Hores de son per dia</h3><canvas id="ch-sleep" height="200"></canvas></div>
+  <div class="chartbox"><h3>🌅 Despertar i hora d'anar al llit</h3><canvas id="ch-bedwake" height="180"></canvas></div>
+  <div class="chartbox"><h3>⏱️ Finestra de vigília mitjana (min)</h3><canvas id="ch-ww" height="180"></canvas></div>
+  <div class="chartbox"><h3>🌙 Despertars nocturns</h3><canvas id="ch-wakes" height="180"></canvas></div>
+  <div class="chartbox"><h3>🌗 Repartiment dia / nit</h3><canvas id="ch-daynight" height="200"></canvas></div>
+  <h2>🍼 Alimentació</h2>
+  <div class="kpis">
+    <div class="kpi"><div class="v" id="k-feeds">–</div><div class="l">🍼 Preses / dia</div></div>
+    <div class="kpi"><div class="v" id="k-ml">–</div><div class="l">🥛 ml / dia</div></div>
+  </div>
+  <div class="chartbox"><h3>🍼 ml per dia</h3><canvas id="ch-feed" height="180"></canvas></div>
 </section>
 
 <!-- ══════ AJUSTOS ══════ -->
@@ -251,11 +260,61 @@
     <button class="small secondary" onclick="askNotif()">Activar notificacions</button>
   </div>
   <div class="card">
+    <h2 style="margin-top:0">📚 Metodologia</h2>
+    <p class="sub">Models, llindars i referències científiques de tots els càlculs de l'app.</p>
+    <button class="small secondary" onclick="go('method')">Obrir metodologia i referències</button>
+  </div>
+  <div class="card">
     <h2 style="margin-top:0">☁️ Compte i dades</h2>
     <p class="sub" id="acct-info"></p>
     <button class="small secondary" onclick="exportData()">Exportar dades (JSON)</button>
     <br><br><button class="small danger" onclick="doLogout()">Tancar sessió</button>
   </div>
+</section>
+
+<!-- ══════ METODOLOGIA ══════ -->
+<section id="scr-method" class="screen">
+  <button class="small secondary" onclick="go('settings')">← Tornar a Ajustos</button>
+  <h1>📚 Metodologia i referències</h1>
+  <p class="sub">Com calcula Dormilega cada mètrica i d'on surten els llindars.</p>
+  <div class="card">
+    <h2 style="margin-top:0">⏱️ Finestres de vigília</h2>
+    <p class="sub" style="margin-bottom:6px">Valors de partida per edat (minuts): 0–4 setmanes: 50 · 5–8: 65 · 9–12: 80 · 3–4 mesos: 95 · 5–6 m: 135 · 7–8 m: 165 · 9–10 m: 195 · 11–12 m: 215 · 13–18 m: 250 · +18 m: 300. Són rangs orientatius d'ús habitual en son infantil, coherents amb la literatura normativa (Galland 2012; Iglowstein 2003).</p>
+    <p class="sub" style="margin-bottom:0"><b>Adaptació al teu nadó:</b> mediana de les finestres reals observades els últims 7 dies (només entre 6:00 i 21:30, i entre 20 min i 6 h), barrejada al 50/50 amb el valor per edat i acotada a ±30 % d'aquest. La primera finestra del dia s'escurça un 8 %.</p>
+  </div>
+  <div class="card">
+    <h2 style="margin-top:0">🔮 Predicció de migdiada i hora de llit</h2>
+    <p class="sub" style="margin-bottom:0">Propera migdiada = últim despertar + finestra adaptada. Hora de llit objectiu per edat: ~21:00 (0–2 mesos), ~19:45 (3–6 m), ~19:30 (+6 m). Si la migdiada cauria a menys de 45 min del llit, es descarta. Migdiada vs. nit es classifica automàticament per l'hora d'inici (18:00–6:00 → nit). L'hora de despertar i d'anar al llit de les gràfiques es deriven del primer i l'últim tram de nit.</p>
+  </div>
+  <div class="card">
+    <h2 style="margin-top:0">😴 Rangs de son total</h2>
+    <p class="sub" style="margin-bottom:0">0–3 mesos: 14–17 h/dia · 4–11 mesos: 12–15 h · 1–2 anys: 11–14 h. Font: recomanacions de durada de son de la National Sleep Foundation (Hirshkowitz et al., Sleep Health, 2015), coherents amb els percentils longitudinals de Zuric (Iglowstein et al., Pediatrics, 2003).</p>
+  </div>
+  <div class="card">
+    <h2 style="margin-top:0">🌙 Despertars i preses nocturnes</h2>
+    <p class="sub" style="margin-bottom:0">Despertars típics per nit: 2–4 (0–3 mesos), 1–3 (3–6 m), 0–2 (6–12 m). Els despertars breus entre cicles de ~50 min són fisiològics (Galland et al., Sleep Med Rev, 2012; Henderson et al., Pediatrics, 2010). Preses nocturnes esperables a 0–3 mesos: 2–4; la consolidació del tram llarg arriba amb l'edat i una bona ingesta diürna.</p>
+  </div>
+  <div class="card">
+    <h2 style="margin-top:0">🕰️ Consistència circadiària</h2>
+    <p class="sub" style="margin-bottom:0">Es mesura la desviació estàndard de l'hora de llit i del despertar dels últims 7 dies; ±30 min es considera estable. La regularitat d'horaris i la llum (natural de dia, foscor de nit) són els senyals principals del rellotge circadiari, que madura cap a les 8–12 setmanes (Rivkees, Pediatrics, 2003). Les rutines curtes i consistents abans de dormir milloren el son (Mindell et al., Sleep, 2015).</p>
+  </div>
+  <div class="card">
+    <h2 style="margin-top:0">🛏️ Lloc de son i seguretat</h2>
+    <p class="sub" style="margin-bottom:0">Es calcula el % de temps de son al bressol dels últims 7 dies (objectiu: nit sencera al bressol). Marc de seguretat: AAP Safe Sleep (Moon et al., Pediatrics, 2022) — de panxa enlaire, superfície pròpia i ferma, idealment a l'habitació dels pares els primers 6 mesos, sense coixins ni roba solta. Abans dels ~3 mesos, el son de contacte és habitual i no genera mals hàbits.</p>
+  </div>
+  <div class="card">
+    <h2 style="margin-top:0">🍼 Alimentació</h2>
+    <p class="sub" style="margin-bottom:0">Ordres de magnitud de guies pediàtriques (AAP/NHS): 8–12 preses/24 h en nounats i ~150 ml per kg i dia amb fórmula; sempre a demanda. Fraccions del biberó: Tot = 100 %, Gairebé tot = 75 %, Meitat = 50 %, Una mica = 25 %; ml presos = preparat × fracció (per defecte, sencer). Tendència: es comparen les dues meitats dels últims 7 dies i es marquen canvis >20 % (brots de creixement típics ~3 i ~6 setmanes i ~3 mesos).</p>
+  </div>
+  <div class="card">
+    <h2 style="margin-top:0">🧮 Índex de son (0–100)</h2>
+    <p class="sub" style="margin-bottom:0">Comença a 100 i resta punts: son total fora de rang (−20), finestres >25 % per sobre del típic (−10), hora de llit variable més de ±45 min (−12), confusió dia-nit (−8), majoria de migdiades de menys de 45 min a partir dels 3 mesos (−8), despertars per sobre del típic (−10), despertar matinal variable (−5), menys del 50 % de son al bressol a partir dels 3 mesos (−5), moltes preses nocturnes a partir dels 4 mesos (−5). Mínim: 35. Colors: ≥85 verd, ≥70 groc, la resta vermell.</p>
+  </div>
+  <div class="card">
+    <h2 style="margin-top:0">📖 Bibliografia principal</h2>
+    <p class="sub" style="margin-bottom:0">Hirshkowitz M, et al. National Sleep Foundation's sleep time duration recommendations. Sleep Health, 2015 · Iglowstein I, et al. Sleep duration from infancy to adolescence: reference values. Pediatrics, 2003 · Galland BC, et al. Normal sleep patterns in infants and children. Sleep Medicine Reviews, 2012 · Mindell JA, et al. Bedtime routines for young children: a dose-dependent association with sleep outcomes. Sleep, 2015 · Moon RY, et al. (AAP Task Force) Evidence base for 2022 updated recommendations for a safe infant sleeping environment. Pediatrics, 2022 · Henderson JMT, et al. Sleeping through the night: infant sleep consolidation. Pediatrics, 2010 · Rivkees SA. Developing circadian rhythmicity in infants. Pediatrics, 2003.</p>
+  </div>
+  <p class="sub">Dormilega no és un producte sanitari ni substitueix el pediatre; és una eina personal d'hàbits. Les recomanacions són heurístiques calculades amb les teves dades i aquests llindars publicats.</p>
 </section>
 
 <!-- ══════ NAV ══════ -->
@@ -269,17 +328,16 @@
 <!-- ══════ EDITOR SON ══════ -->
 <dialog id="editor">
   <h2 style="margin-top:0" id="ed-title">Registre de son</h2>
-  <label>Tipus</label>
-  <select id="ed-kind"><option value="nap">Migdiada</option><option value="night">Son nocturn</option></select>
+  <p class="sub" style="margin:4px 0 0">El tipus (migdiada o nit) es classifica sol segons l'hora d'inici.</p>
   <label>On dorm?</label>
   <select id="ed-loc">
     <option value="">—</option>
-    <option value="bressol">Bressol</option>
+    <option value="bressol">Bressol / niu</option>
     <option value="cotxet">Cotxet</option>
     <option value="cotxe">Cotxe</option>
+    <option value="hamaca">Hamaca / Trip Trap</option>
     <option value="bracos">En braços / contacte</option>
     <option value="llit_pares">Llit dels pares</option>
-    <option value="altres">Altres</option>
   </select>
   <label>Inici</label><input id="ed-start" type="datetime-local">
   <label>Fi (buit = encara dorm)</label><input id="ed-end" type="datetime-local">
@@ -325,7 +383,7 @@ const LS = { cfg:'dl_cfg', baby:'dl_baby', sessions:'dl_sessions', feedings:'dl_
 let sb = null, user = null, baby = null;
 let sessions = [];   // son (30 dies), ordre asc per start_at
 let feedings = [];   // preses (30 dies), ordre asc per start_at
-let charts = {}, notifTimer = null;
+let charts = {}, notifTimer = null, feedTimer = null;
 
 const $ = id => document.getElementById(id);
 const uuid = () => (crypto.randomUUID ? crypto.randomUUID() :
@@ -568,16 +626,29 @@ async function toggleSleep(){
 function askNotif(){ if('Notification' in window) Notification.requestPermission().then(scheduleNotif); }
 function scheduleNotif(){
   if(!('Notification' in window) || Notification.permission!=='granted') return;
-  clearTimeout(notifTimer);
+  clearTimeout(notifTimer); clearTimeout(feedTimer);
   const p = prediction();
-  if(!p.nap) return;
-  const t = p.nap.getTime() - 15*60000 - Date.now();
-  if(t>0 && t<12*3600000){
-    notifTimer = setTimeout(()=>{
-      try{ navigator.serviceWorker.ready.then(r=>r.showNotification('🌙 Dormilega',
-        {body:`La migdiada de ${baby.name} toca a les ${fmtT(p.nap)} (d'aquí a ~15 min)`, icon:'icons/icon-192.png'})); }
-      catch(e){ new Notification('🌙 Dormilega',{body:`Migdiada a les ${fmtT(p.nap)}`}); }
-    }, t);
+  if(p.nap){
+    const t = p.nap.getTime() - 15*60000 - Date.now();
+    if(t>0 && t<12*3600000){
+      notifTimer = setTimeout(()=>{
+        try{ navigator.serviceWorker.ready.then(r=>r.showNotification('🌙 Dormilega',
+          {body:`La migdiada de ${baby.name} toca a les ${fmtT(p.nap)} (d'aquí a ~15 min)`, icon:'icons/icon-192.png'})); }
+        catch(e){ new Notification('🌙 Dormilega',{body:`Migdiada a les ${fmtT(p.nap)}`}); }
+      }, t);
+    }
+  }
+  // recordatori de presa: ~3 h (0-3 mesos) o ~4 h després de l'última
+  if(feedings.length){
+    const gapH = ageWeeks()<14 ? 3 : 4;
+    const tf = new Date(feedings[feedings.length-1].start_at).getTime() + gapH*3600000 - Date.now();
+    if(tf>0 && tf<12*3600000){
+      feedTimer = setTimeout(()=>{
+        try{ navigator.serviceWorker.ready.then(r=>r.showNotification('🍼 Dormilega',
+          {body:`Fa ~${gapH} h de l'última presa de ${baby.name}`, icon:'icons/icon-192.png'})); }
+        catch(e){}
+      }, tf);
+    }
   }
 }
 
@@ -596,11 +667,23 @@ function go(name){
 }
 function enterApp(){ switchScreen('home'); renderAll(); setInterval(tick,30000); tick(); updateSyncDot(); }
 
+let refreshing=false;
 async function doRefresh(){
-  const b=$('refreshBtn'); b.disabled=true; b.textContent='…';
+  if(refreshing) return; refreshing=true;
+  const b=$('refreshBtn'); if(b){ b.disabled=true; b.textContent='…'; }
+  $('syncdot').textContent='↻ actualitzant…';
   try{ await flushQueue(); await loadData(); renderAll(); }catch(e){}
-  b.disabled=false; b.textContent='↻';
+  if(b){ b.disabled=false; b.textContent='↻'; }
+  updateSyncDot(); refreshing=false;
 }
+// estira cap avall (amb la pàgina a dalt de tot) per refrescar — funciona a totes les pantalles
+let ptrY=null;
+document.addEventListener('touchstart',e=>{ ptrY = window.scrollY<=0 ? e.touches[0].clientY : null; },{passive:true});
+document.addEventListener('touchmove',e=>{
+  if(ptrY==null) return;
+  if(e.touches[0].clientY-ptrY>90){ ptrY=null; doRefresh(); }
+},{passive:true});
+document.addEventListener('touchend',()=>{ ptrY=null; });
 
 function renderAll(){ renderHome(); renderLog(); renderStats(); renderSettings(); scheduleNotif(); }
 
@@ -629,12 +712,17 @@ function renderHome(){
 
   const p = prediction();
   $('pred-nap').textContent = p.nap ? fmtT(p.nap) : '—';
-  $('pred-nap-sub').textContent = p.nap ? (p.nap<new Date()?'ja toca!':`d'aquí a ${fmtDur(p.nap-new Date())}`) : 'avui ja no toca';
+  $('pred-nap-sub').textContent = p.nap ? (p.nap<new Date()?'ja toca!':`d'aquí a ${fmtDur(p.nap-new Date())}`) : (og? 'dormint ara':'avui ja no toca');
   $('pred-bed').textContent = fmtT(p.bed);
   $('pred-bed-sub').textContent = "segons l'edat";
   tick();
 
   const today = mergedItems().filter(it=>dayKey(it.start_at)===dayKey(new Date())).reverse();
+  const tk=dayKey(new Date());
+  let sleepMs=0; sessions.filter(s=>dayKey(s.start_at)===tk).forEach(s=>{ sleepMs += (s.end_at? new Date(s.end_at): new Date()) - new Date(s.start_at); });
+  const mlToday = feedings.filter(f=>dayKey(f.start_at)===tk)
+    .reduce((a,f)=>a+((f.amount_start!=null&&f.amount_end!=null)?Math.max(0,f.amount_start-f.amount_end):0),0);
+  $('dayTotals').innerHTML = `<div class="chip">😴 ${fmtDur(sleepMs)}<small>de son avui</small></div><div class="chip">🍼 ${mlToday} ml<small>presos avui</small></div>`;
   $('todayList').innerHTML = today.length ? today.map(itemRow).join('') :
     '<p class="sub" style="margin:0">Encara no hi ha registres</p>';
 }
@@ -645,7 +733,11 @@ function mergedItems(){
   const b = feedings.map(f=>({...f,_tbl:'feedings'}));
   return [...a,...b].sort((x,y)=>x.start_at.localeCompare(y.start_at));
 }
-const LOC={bressol:'🛏️',cotxet:'🚼',cotxe:'🚗',bracos:'🤱',llit_pares:'🛌',altres:'📍'};
+const LOC={bressol:'🛏️',cotxet:'🚼',cotxe:'🚗',hamaca:'🪑',bracos:'🤱',llit_pares:'🛌',altres:'📍'};
+function fracDonut(p){
+  const r=5, c=2*Math.PI*r;
+  return `<svg width="14" height="14" viewBox="0 0 14 14" style="vertical-align:-2px"><circle cx="7" cy="7" r="${r}" fill="none" stroke="rgba(255,255,255,.18)" stroke-width="3"/><circle cx="7" cy="7" r="${r}" fill="none" stroke="var(--feed)" stroke-width="3" stroke-linecap="round" stroke-dasharray="${(c*p).toFixed(1)} ${c.toFixed(1)}" transform="rotate(-90 7 7)"/></svg>`;
+}
 function feedAmounts(f){
   const qi=f.amount_start, qf=f.amount_end;
   if(qi==null && qf==null) return '—';
@@ -655,15 +747,16 @@ function feedAmounts(f){
 function itemRow(it){
   if(it._tbl==='feedings'){
     const dur = it.end_at ? fmtDur(new Date(it.end_at)-new Date(it.start_at)) : '';
+    const dnt = (it.amount_start>0 && it.amount_end!=null)? ' '+fracDonut(Math.max(0,Math.min(1,(it.amount_start-it.amount_end)/it.amount_start))):'';
     return `<div class="sess" onclick="openFeed('${it.id}')">
-      <div><span class="badge feed">Presa</span></div>
+      <div><span class="badge feed">🍼 Presa</span></div>
       <div class="times">${fmtT(it.start_at)}${it.end_at?` – ${fmtT(it.end_at)}`:''}</div>
-      <div class="dur">${feedAmounts(it)}${dur?`<br>${dur}`:''}</div></div>`;
+      <div class="dur">${feedAmounts(it)}${dnt}${dur?`<br>${dur}`:''}</div></div>`;
   }
   const dur = it.end_at ? fmtDur(new Date(it.end_at)-new Date(it.start_at)) : 'en curs…';
   return `<div class="sess" onclick="openEditor('${it.id}')">
-    <div><span class="badge ${it.kind}">${it.kind==='nap'?'Migdiada':'Nit'}</span>${it.location?' '+(LOC[it.location]||''):''}</div>
-    <div class="times">${fmtT(it.start_at)} – ${it.end_at?fmtT(it.end_at):'···'}</div>
+    <div><span class="badge ${it.kind}">${it.kind==='nap'?'😴 Migdiada':'🌙 Nit'}</span></div>
+    <div class="times">${fmtT(it.start_at)} – ${it.end_at?fmtT(it.end_at):'···'}${it.location?' '+(LOC[it.location]||''):''}</div>
     <div class="dur">${dur}</div></div>`;
 }
 
@@ -961,7 +1054,6 @@ function openEditor(id){
   editId=id;
   const s = id? sessions.find(x=>x.id===id):null;
   $('ed-title').textContent = s? 'Editar registre':'Afegir registre';
-  $('ed-kind').value = s? s.kind:'nap';
   $('ed-loc').value = s&&s.location? s.location:(localStorage.getItem('dl_lastloc')||'');
   $('ed-start').value = s? toLocalInput(s.start_at): toLocalInput(new Date(Date.now()-3600000));
   $('ed-end').value = s&&s.end_at? toLocalInput(s.end_at): (s? '': toLocalInput(new Date()));
@@ -971,8 +1063,9 @@ function openEditor(id){
 }
 function closeEditor(){ $('editor').close(); }
 async function saveEditor(){
-  const start=$('ed-start').value, end=$('ed-end').value, kind=$('ed-kind').value;
+  const start=$('ed-start').value, end=$('ed-end').value;
   if(!start) return show('ed-msg',"Falta l'hora d'inici",'err');
+  const h0=new Date(start).getHours(); const kind=(h0>=18||h0<6)?'night':'nap';
   if(end && new Date(end)<=new Date(start)) return show('ed-msg','El final ha de ser posterior a l\'inici','err');
   const loc=$('ed-loc').value||null;
   if(loc) localStorage.setItem('dl_lastloc',loc);
@@ -1033,6 +1126,6 @@ function show(id,txt,cls){ $(id).innerHTML=`<div class="msg ${cls}">${txt}</div>
 
 boot();
 </script>
-<!-- Dormilega v9 -->
+<!-- Dormilega v11 -->
 </body>
 </html>
