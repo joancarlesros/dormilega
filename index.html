@@ -37,6 +37,8 @@
   input,select,textarea{width:100%;padding:12px;border-radius:12px;border:1px solid #3a3a7a;
     background:var(--bg2);color:var(--text);font-size:1rem;outline:none}
   input:focus,select:focus{border-color:var(--accent)}
+  input[type="date"],input[type="datetime-local"]{-webkit-appearance:none;appearance:none;
+    min-width:0;max-width:100%;display:block;text-align:left;min-height:47px}
   button{border:none;border-radius:14px;padding:13px 18px;font-size:1rem;font-weight:600;
     cursor:pointer;background:var(--accent2);color:#fff;width:100%}
   button.secondary{background:var(--card2);color:var(--text)}
@@ -75,8 +77,9 @@
     backdrop-filter:blur(12px);border-top:1px solid rgba(255,255,255,.08);
     display:flex;justify-content:space-around;padding:8px 4px calc(8px + env(safe-area-inset-bottom));z-index:50}
   nav .tab{background:none;color:var(--muted);width:auto;flex:1;display:flex;flex-direction:column;
-    align-items:center;gap:2px;font-size:.68rem;font-weight:500;padding:6px 2px;border-radius:12px}
-  nav .tab .ic{font-size:1.35rem}
+    align-items:center;justify-content:center;gap:2px;font-size:.68rem;font-weight:500;
+    padding:0 2px;border-radius:12px;height:52px;white-space:nowrap;overflow:hidden}
+  nav .tab .ic{font-size:1.3rem;line-height:1.4;height:1.85rem;display:block}
   nav .tab.active{color:var(--accent)}
   .hidden{display:none!important}
   .msg{padding:10px 14px;border-radius:12px;font-size:.88rem;margin:10px 0}
@@ -272,10 +275,16 @@
   <label>Hora d'inici</label><input id="fd-start" type="datetime-local">
   <label>Hora de fi (opcional)</label><input id="fd-end" type="datetime-local">
   <div class="grid2">
-    <div><label>Quantitat inicial (ml)</label><input id="fd-qini" type="number" inputmode="decimal" min="0" step="5" placeholder="120"></div>
-    <div><label>Quantitat final (ml)</label><input id="fd-qfin" type="number" inputmode="decimal" min="0" step="5" placeholder="20"></div>
+    <div><label>Biberó preparat (ml)</label><input id="fd-qini" type="number" inputmode="decimal" min="0" step="5" placeholder="120"></div>
+    <div><label>Quant n'ha pres?</label><select id="fd-frac">
+      <option value="">— (pit / no ho sé)</option>
+      <option value="1">Tot</option>
+      <option value="0.85">Gairebé tot</option>
+      <option value="0.5">La meitat</option>
+      <option value="0.25">Una mica</option>
+    </select></div>
   </div>
-  <p class="sub" style="margin:8px 0 0">Consumit = inicial − final. Deixa-ho en blanc si és pit.</p>
+  <p class="sub" style="margin:8px 0 0">Els ml presos es calculen sols (biberó × fracció). Si és pit, deixa-ho en blanc.</p>
   <div id="fd-msg"></div>
   <div class="modal-actions">
     <button class="secondary" onclick="closeFeed()">Cancel·lar</button>
@@ -611,16 +620,16 @@ function mergedItems(){
 function feedAmounts(f){
   const qi=f.amount_start, qf=f.amount_end;
   if(qi==null && qf==null) return 'pit';
-  const cons=(qi!=null&&qf!=null)? `${Math.max(0,qi-qf)} ml` : '';
-  return `${qi??'?'}→${qf??'?'} ml${cons?` · ${cons}`:''}`;
+  if(qi!=null && qf!=null) return `${Math.max(0,qi-qf)}/${qi} ml`;
+  return `${qi??'?'} ml`;
 }
 function itemRow(it){
   if(it._tbl==='feedings'){
-    const dur = it.end_at ? fmtDur(new Date(it.end_at)-new Date(it.start_at)) : 'en curs…';
+    const dur = it.end_at ? fmtDur(new Date(it.end_at)-new Date(it.start_at)) : '';
     return `<div class="sess" onclick="openFeed('${it.id}')">
       <div><span class="badge feed">Presa</span></div>
       <div class="times">${fmtT(it.start_at)}${it.end_at?` – ${fmtT(it.end_at)}`:''}</div>
-      <div class="dur">${feedAmounts(it)}<br>${dur}</div></div>`;
+      <div class="dur">${feedAmounts(it)}${dur?`<br>${dur}`:''}</div></div>`;
   }
   const dur = it.end_at ? fmtDur(new Date(it.end_at)-new Date(it.start_at)) : 'en curs…';
   return `<div class="sess" onclick="openEditor('${it.id}')">
@@ -865,7 +874,12 @@ function openFeed(id){
   $('fd-start').value = f? toLocalInput(f.start_at): toLocalInput(new Date());
   $('fd-end').value = f&&f.end_at? toLocalInput(f.end_at):'';
   $('fd-qini').value = f&&f.amount_start!=null? f.amount_start:'';
-  $('fd-qfin').value = f&&f.amount_end!=null? f.amount_end:'';
+  let frac='';
+  if(f && f.amount_start>0 && f.amount_end!=null){
+    const c=1-(f.amount_end/f.amount_start);
+    frac=[1,0.85,0.5,0.25].reduce((a,b)=>Math.abs(b-c)<Math.abs(a-c)?b:a);
+  }
+  $('fd-frac').value=String(frac);
   $('fd-del').classList.toggle('hidden',!f);
   $('fd-msg').innerHTML='';
   $('feeditor').showModal();
@@ -873,11 +887,11 @@ function openFeed(id){
 function closeFeed(){ $('feeditor').close(); }
 async function saveFeed(){
   const start=$('fd-start').value, end=$('fd-end').value;
-  const qi=$('fd-qini').value, qf=$('fd-qfin').value;
+  const qi=$('fd-qini').value, fr=$('fd-frac').value;
   if(!start) return show('fd-msg',"Falta l'hora d'inici",'err');
   if(end && new Date(end)<=new Date(start)) return show('fd-msg','El final ha de ser posterior a l\'inici','err');
-  const ai = qi===''? null: Number(qi), af = qf===''? null: Number(qf);
-  if(ai!=null && af!=null && af>ai) return show('fd-msg','La quantitat final no pot ser més gran que la inicial','err');
+  const ai = qi===''? null: Number(qi);
+  const af = (ai!=null && fr!=='')? Math.round(ai*(1-Number(fr))) : null;
   const payload={ start_at:new Date(start).toISOString(), end_at: end? new Date(end).toISOString():null,
     amount_start:ai, amount_end:af };
   if(feedId) await dbUpdate('feedings',feedId,payload);
@@ -901,6 +915,6 @@ function show(id,txt,cls){ $(id).innerHTML=`<div class="msg ${cls}">${txt}</div>
 
 boot();
 </script>
-<!-- Dormilega v3 -->
+<!-- Dormilega v6 -->
 </body>
 </html>
