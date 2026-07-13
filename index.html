@@ -1,0 +1,773 @@
+<!DOCTYPE html>
+<html lang="ca">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#141433">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<title>Dormilega · Son del nadó</title>
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="icons/icon-192.png">
+<link rel="icon" href="icons/icon-192.png">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.3/chart.umd.min.js"></script>
+<style>
+  :root{
+    --bg:#141433; --bg2:#1d1d47; --card:#232355; --card2:#2b2b66;
+    --text:#f1f0ff; --muted:#9d9cc7; --accent:#a78bfa; --accent2:#7c6cf0;
+    --moon:#fcd34d; --ok:#4ade80; --warn:#fb7185; --nap:#a78bfa; --night:#38bdf8; --feed:#34d399;
+    --radius:20px;
+  }
+  *{box-sizing:border-box; -webkit-tap-highlight-color:transparent}
+  html,body{margin:0;padding:0;background:var(--bg);color:var(--text);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+    min-height:100%; overscroll-behavior-y:none}
+  body{padding-bottom:calc(76px + env(safe-area-inset-bottom))}
+  .screen{display:none;padding:18px 16px 24px;max-width:520px;margin:0 auto}
+  .screen.active{display:block}
+  h1{font-size:1.5rem;margin:8px 0 4px}
+  h2{font-size:1.1rem;margin:20px 0 10px;color:var(--text)}
+  .sub{color:var(--muted);font-size:.9rem;margin:0 0 16px}
+  .card{background:var(--card);border-radius:var(--radius);padding:16px;margin-bottom:14px}
+  .row{display:flex;align-items:center;justify-content:space-between;gap:10px}
+  label{display:block;font-size:.85rem;color:var(--muted);margin:12px 0 4px}
+  input,select,textarea{width:100%;padding:12px;border-radius:12px;border:1px solid #3a3a7a;
+    background:var(--bg2);color:var(--text);font-size:1rem;outline:none}
+  input:focus,select:focus{border-color:var(--accent)}
+  button{border:none;border-radius:14px;padding:13px 18px;font-size:1rem;font-weight:600;
+    cursor:pointer;background:var(--accent2);color:#fff;width:100%}
+  button.secondary{background:var(--card2);color:var(--text)}
+  button.small{width:auto;padding:8px 14px;font-size:.85rem;border-radius:10px}
+  button.danger{background:transparent;color:var(--warn);border:1px solid var(--warn)}
+  button:disabled{opacity:.5}
+  .bigbtn{margin:18px 0 10px;padding:22px;font-size:1.25rem;border-radius:24px;
+    background:linear-gradient(135deg,#7c6cf0,#a78bfa);box-shadow:0 8px 30px rgba(124,108,240,.4)}
+  .bigbtn.wake{background:linear-gradient(135deg,#f59e0b,#fcd34d);color:#3b2f00;
+    box-shadow:0 8px 30px rgba(252,211,77,.3)}
+  .feedbtn{background:linear-gradient(135deg,#059669,#34d399);margin-bottom:18px}
+  .statuscircle{width:170px;height:170px;border-radius:50%;margin:14px auto;display:flex;
+    flex-direction:column;align-items:center;justify-content:center;gap:4px;
+    background:radial-gradient(circle at 35% 30%, var(--card2), var(--bg2));
+    border:3px solid var(--accent);text-align:center}
+  .statuscircle.sleeping{border-color:var(--moon)}
+  .statuscircle .emoji{font-size:2.4rem}
+  .statuscircle .t{font-size:1.6rem;font-weight:700;font-variant-numeric:tabular-nums}
+  .statuscircle .lbl{font-size:.8rem;color:var(--muted)}
+  .pred{display:flex;gap:10px}
+  .pred .card{flex:1;text-align:center;margin-bottom:0}
+  .pred .time{font-size:1.5rem;font-weight:700;color:var(--moon)}
+  .pred .lbl{font-size:.78rem;color:var(--muted)}
+  .badge{display:inline-block;padding:3px 10px;border-radius:999px;font-size:.75rem;font-weight:600}
+  .badge.nap{background:rgba(167,139,250,.2);color:var(--nap)}
+  .badge.night{background:rgba(56,189,248,.18);color:var(--night)}
+  .badge.feed{background:rgba(52,211,153,.16);color:var(--feed)}
+  .sess{display:flex;align-items:center;justify-content:space-between;padding:11px 0;gap:8px;
+    border-bottom:1px solid rgba(255,255,255,.06)}
+  .sess:last-child{border-bottom:none}
+  .sess .times{font-weight:600;font-variant-numeric:tabular-nums}
+  .sess .dur{color:var(--muted);font-size:.85rem;text-align:right}
+  .daylbl{color:var(--muted);font-size:.8rem;text-transform:uppercase;letter-spacing:.06em;
+    margin:18px 0 6px}
+  nav{position:fixed;bottom:0;left:0;right:0;background:rgba(20,20,51,.96);
+    backdrop-filter:blur(12px);border-top:1px solid rgba(255,255,255,.08);
+    display:flex;justify-content:space-around;padding:8px 4px calc(8px + env(safe-area-inset-bottom));z-index:50}
+  nav .tab{background:none;color:var(--muted);width:auto;flex:1;display:flex;flex-direction:column;
+    align-items:center;gap:2px;font-size:.68rem;font-weight:500;padding:6px 2px;border-radius:12px}
+  nav .tab .ic{font-size:1.35rem}
+  nav .tab.active{color:var(--accent)}
+  .hidden{display:none!important}
+  .msg{padding:10px 14px;border-radius:12px;font-size:.88rem;margin:10px 0}
+  .msg.err{background:rgba(251,113,133,.15);color:var(--warn)}
+  .msg.ok{background:rgba(74,222,128,.12);color:var(--ok)}
+  .kpis{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px}
+  .kpi{background:var(--card);border-radius:16px;padding:14px;text-align:center}
+  .kpi .v{font-size:1.35rem;font-weight:700;color:var(--accent)}
+  .kpi .l{font-size:.72rem;color:var(--muted);margin-top:2px}
+  canvas{max-width:100%}
+  .chartbox{background:var(--card);border-radius:var(--radius);padding:14px;margin-bottom:14px}
+  .chartbox h3{margin:0 0 10px;font-size:.95rem;color:var(--muted);font-weight:600}
+  .offline{position:fixed;top:0;left:0;right:0;background:#b45309;color:#fff;text-align:center;
+    font-size:.78rem;padding:4px;z-index:99}
+  dialog{border:none;border-radius:20px;background:var(--card);color:var(--text);
+    width:min(92vw,420px);padding:20px}
+  dialog::backdrop{background:rgba(0,0,0,.6)}
+  .modal-actions{display:flex;gap:10px;margin-top:16px}
+  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+  a{color:var(--accent)}
+  .logo{font-size:2.2rem;text-align:center;margin-top:26px}
+  .center{text-align:center}
+</style>
+</head>
+<body>
+
+<div id="offlineBar" class="offline hidden">Sense connexió: els canvis es desaran i se sincronitzaran quan torni</div>
+
+<!-- ══════ CONFIG ══════ -->
+<section id="scr-config" class="screen">
+  <div class="logo">🌙</div>
+  <h1 class="center">Dormilega</h1>
+  <p class="sub center">La teva app personal del son del nadó</p>
+  <div class="card">
+    <p class="sub">Connecta el teu projecte de Supabase (vegeu LLEGEIX-ME.md). Només es demana un cop per dispositiu.</p>
+    <label>URL del projecte</label>
+    <input id="cfg-url" placeholder="https://xxxx.supabase.co" autocapitalize="off">
+    <label>Clau anon (public)</label>
+    <input id="cfg-key" placeholder="eyJhbGciOi..." autocapitalize="off">
+    <div id="cfg-msg"></div>
+    <br><button onclick="saveConfig()">Connectar</button>
+  </div>
+</section>
+
+<!-- ══════ AUTH ══════ -->
+<section id="scr-auth" class="screen">
+  <div class="logo">🌙</div>
+  <h1 class="center">Dormilega</h1>
+  <p class="sub center">Inicia sessió (mateix compte a tots els teus dispositius)</p>
+  <div class="card">
+    <label>Email</label>
+    <input id="auth-email" type="email" autocapitalize="off">
+    <label>Contrasenya</label>
+    <input id="auth-pass" type="password">
+    <div id="auth-msg"></div>
+    <br><button onclick="doLogin()">Entrar</button>
+    <br><br><button class="secondary" onclick="doSignup()">Crear compte</button>
+  </div>
+</section>
+
+<!-- ══════ BABY SETUP ══════ -->
+<section id="scr-baby" class="screen">
+  <h1>👶 El teu nadó</h1>
+  <p class="sub">Amb la data de naixement calculo les finestres de vigília segons l'edat.</p>
+  <div class="card">
+    <label>Nom</label>
+    <input id="baby-name">
+    <label>Data de naixement</label>
+    <input id="baby-birth" type="date">
+    <div id="baby-msg"></div>
+    <br><button onclick="saveBaby()">Desar</button>
+  </div>
+</section>
+
+<!-- ══════ AVUI ══════ -->
+<section id="scr-home" class="screen">
+  <div class="row">
+    <div><h1 id="home-title">Hola</h1><p class="sub" id="home-age"></p></div>
+    <div id="syncdot" style="font-size:.72rem;color:var(--muted)"></div>
+  </div>
+
+  <div class="statuscircle" id="statusCircle">
+    <div class="emoji" id="st-emoji">☀️</div>
+    <div class="t" id="st-timer">--:--</div>
+    <div class="lbl" id="st-label">despert</div>
+  </div>
+
+  <button class="bigbtn" id="mainBtn" onclick="toggleSleep()">😴 Comença a dormir</button>
+  <button class="bigbtn feedbtn" onclick="openFeed(null)">🍼 Registrar presa</button>
+
+  <div class="pred">
+    <div class="card"><div class="lbl">Propera migdiada</div><div class="time" id="pred-nap">--:--</div><div class="lbl" id="pred-nap-sub"></div></div>
+    <div class="card"><div class="lbl">Al llit</div><div class="time" id="pred-bed">--:--</div><div class="lbl" id="pred-bed-sub"></div></div>
+  </div>
+
+  <h2>Avui</h2>
+  <div class="card" id="todayList"><p class="sub" style="margin:0">Encara no hi ha registres</p></div>
+</section>
+
+<!-- ══════ HISTORIAL ══════ -->
+<section id="scr-log" class="screen">
+  <div class="row"><h1>Historial</h1>
+    <div style="display:flex;gap:8px">
+      <button class="small" onclick="openEditor(null)">＋ Son</button>
+      <button class="small" style="background:var(--feed);color:#053b2b" onclick="openFeed(null)">＋ Presa</button>
+    </div></div>
+  <div id="logList"></div>
+</section>
+
+<!-- ══════ STATS ══════ -->
+<section id="scr-stats" class="screen">
+  <h1>Estadístiques</h1>
+  <p class="sub">Darrers 14 dies</p>
+  <div class="kpis">
+    <div class="kpi"><div class="v" id="k-total">–</div><div class="l">Son mitjà / dia</div></div>
+    <div class="kpi"><div class="v" id="k-naps">–</div><div class="l">Migdiades / dia</div></div>
+    <div class="kpi"><div class="v" id="k-ww">–</div><div class="l">Finestra de vigília mitjana</div></div>
+    <div class="kpi"><div class="v" id="k-wakes">–</div><div class="l">Despertars nocturns / nit</div></div>
+    <div class="kpi"><div class="v" id="k-feeds">–</div><div class="l">Preses / dia</div></div>
+    <div class="kpi"><div class="v" id="k-ml">–</div><div class="l">ml / dia</div></div>
+  </div>
+  <div class="chartbox"><h3>Hores de son per dia</h3><canvas id="ch-sleep" height="200"></canvas></div>
+  <div class="chartbox"><h3>Finestra de vigília mitjana (min)</h3><canvas id="ch-ww" height="180"></canvas></div>
+  <div class="chartbox"><h3>Despertars nocturns</h3><canvas id="ch-wakes" height="180"></canvas></div>
+  <div class="chartbox"><h3>Alimentació (ml per dia)</h3><canvas id="ch-feed" height="180"></canvas></div>
+</section>
+
+<!-- ══════ AJUSTOS ══════ -->
+<section id="scr-settings" class="screen">
+  <h1>Ajustos</h1>
+  <div class="card">
+    <h2 style="margin-top:0">👶 Nadó</h2>
+    <label>Nom</label><input id="set-name">
+    <label>Data de naixement</label><input id="set-birth" type="date">
+    <br><button class="small" onclick="updateBaby()">Desar canvis</button>
+    <div id="set-msg"></div>
+  </div>
+  <div class="card">
+    <h2 style="margin-top:0">🔔 Avisos</h2>
+    <p class="sub">Avís 15 min abans de la propera migdiada (amb l'app oberta o instal·lada).</p>
+    <button class="small secondary" onclick="askNotif()">Activar notificacions</button>
+  </div>
+  <div class="card">
+    <h2 style="margin-top:0">☁️ Compte i dades</h2>
+    <p class="sub" id="acct-info"></p>
+    <button class="small secondary" onclick="exportData()">Exportar dades (JSON)</button>
+    <br><br><button class="small danger" onclick="doLogout()">Tancar sessió</button>
+  </div>
+</section>
+
+<!-- ══════ NAV ══════ -->
+<nav id="mainNav" class="hidden">
+  <button class="tab active" data-scr="home" onclick="go('home')"><span class="ic">🌙</span>Avui</button>
+  <button class="tab" data-scr="log" onclick="go('log')"><span class="ic">📋</span>Historial</button>
+  <button class="tab" data-scr="stats" onclick="go('stats')"><span class="ic">📈</span>Estadístiques</button>
+  <button class="tab" data-scr="settings" onclick="go('settings')"><span class="ic">⚙️</span>Ajustos</button>
+</nav>
+
+<!-- ══════ EDITOR SON ══════ -->
+<dialog id="editor">
+  <h2 style="margin-top:0" id="ed-title">Registre de son</h2>
+  <label>Tipus</label>
+  <select id="ed-kind"><option value="nap">Migdiada</option><option value="night">Son nocturn</option></select>
+  <label>Inici</label><input id="ed-start" type="datetime-local">
+  <label>Fi (buit = encara dorm)</label><input id="ed-end" type="datetime-local">
+  <div id="ed-msg"></div>
+  <div class="modal-actions">
+    <button class="secondary" onclick="closeEditor()">Cancel·lar</button>
+    <button onclick="saveEditor()">Desar</button>
+  </div>
+  <br><button id="ed-del" class="danger hidden" onclick="deleteFromEditor()">Eliminar registre</button>
+</dialog>
+
+<!-- ══════ EDITOR PRESA ══════ -->
+<dialog id="feeditor">
+  <h2 style="margin-top:0" id="fd-title">Registre de presa</h2>
+  <label>Hora d'inici</label><input id="fd-start" type="datetime-local">
+  <label>Hora de fi (opcional)</label><input id="fd-end" type="datetime-local">
+  <div class="grid2">
+    <div><label>Quantitat inicial (ml)</label><input id="fd-qini" type="number" inputmode="decimal" min="0" step="5" placeholder="120"></div>
+    <div><label>Quantitat final (ml)</label><input id="fd-qfin" type="number" inputmode="decimal" min="0" step="5" placeholder="20"></div>
+  </div>
+  <p class="sub" style="margin:8px 0 0">Consumit = inicial − final. Deixa-ho en blanc si és pit.</p>
+  <div id="fd-msg"></div>
+  <div class="modal-actions">
+    <button class="secondary" onclick="closeFeed()">Cancel·lar</button>
+    <button onclick="saveFeed()">Desar</button>
+  </div>
+  <br><button id="fd-del" class="danger hidden" onclick="deleteFeed()">Eliminar registre</button>
+</dialog>
+
+<script>
+'use strict';
+/* ════════════════════════════════════════════════════════════════
+   Dormilega — PWA personal del son del nadó
+   Dades: Supabase (gratuït) · Offline: localStorage + cua de sync
+   ════════════════════════════════════════════════════════════════ */
+
+const LS = { cfg:'dl_cfg', baby:'dl_baby', sessions:'dl_sessions', feedings:'dl_feedings', queue:'dl_queue' };
+let sb = null, user = null, baby = null;
+let sessions = [];   // son (30 dies), ordre asc per start_at
+let feedings = [];   // preses (30 dies), ordre asc per start_at
+let charts = {}, notifTimer = null;
+
+const $ = id => document.getElementById(id);
+const uuid = () => (crypto.randomUUID ? crypto.randomUUID() :
+  'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g,c=>{const r=Math.random()*16|0;return (c=='x'?r:(r&0x3|0x8)).toString(16)}));
+
+/* ───────── Utilitats de temps ───────── */
+const fmtT = d => new Date(d).toLocaleTimeString('ca-ES',{hour:'2-digit',minute:'2-digit'});
+const fmtD = d => new Date(d).toLocaleDateString('ca-ES',{weekday:'long',day:'numeric',month:'short'});
+const mins = ms => Math.round(ms/60000);
+function fmtDur(ms){
+  const m = mins(ms); const h = Math.floor(m/60);
+  return h>0 ? `${h} h ${String(m%60).padStart(2,'0')} min` : `${m} min`;
+}
+function dayKey(d){ const x=new Date(d); return `${x.getFullYear()}-${String(x.getMonth()+1).padStart(2,'0')}-${String(x.getDate()).padStart(2,'0')}`; }
+function ageWeeks(){ return baby ? Math.max(0, Math.floor((Date.now()-new Date(baby.birthdate+'T00:00'))/(7*864e5))) : 8; }
+function ageLabel(){
+  const w = ageWeeks();
+  if (w < 9) return `${w} setman${w===1?'a':'es'}`;
+  const mo = Math.floor(w/4.345);
+  return `${mo} mes${mo===1?'':'os'}`;
+}
+
+/* ───────── Config i arrencada ───────── */
+function getCfg(){ try{return JSON.parse(localStorage.getItem(LS.cfg))}catch(e){return null} }
+function saveConfig(){
+  const url = $('cfg-url').value.trim().replace(/\/+$/,'');
+  const key = $('cfg-key').value.trim();
+  if (!/^https:\/\/.+\.supabase\.co$/.test(url) || key.length < 30){
+    return show('cfg-msg','Revisa la URL (https://xxxx.supabase.co) i la clau anon','err');
+  }
+  localStorage.setItem(LS.cfg, JSON.stringify({url,key}));
+  location.reload();
+}
+
+async function boot(){
+  if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(()=>{});
+  window.addEventListener('online', ()=>{ $('offlineBar').classList.add('hidden'); flushQueue(); });
+  window.addEventListener('offline', ()=>$('offlineBar').classList.remove('hidden'));
+  if (!navigator.onLine) $('offlineBar').classList.remove('hidden');
+
+  const cfg = getCfg();
+  if (!cfg){ return switchScreen('config'); }
+  sb = supabase.createClient(cfg.url, cfg.key);
+
+  const { data:{ session } } = await sb.auth.getSession().catch(()=>({data:{session:null}}));
+  if (!session){
+    if (!navigator.onLine && localStorage.getItem(LS.baby)){
+      baby = JSON.parse(localStorage.getItem(LS.baby));
+      sessions = loadLocal(LS.sessions); feedings = loadLocal(LS.feedings);
+      return enterApp();
+    }
+    return switchScreen('auth');
+  }
+  user = session.user;
+  await afterLogin();
+}
+
+async function doSignup(){
+  const email=$('auth-email').value.trim(), pass=$('auth-pass').value;
+  if(!email||pass.length<6) return show('auth-msg','Email vàlid i contrasenya de 6+ caràcters','err');
+  const {data,error} = await sb.auth.signUp({email,password:pass});
+  if(error) return show('auth-msg',error.message,'err');
+  if(data.session){ user=data.session.user; return afterLogin(); }
+  show('auth-msg','Compte creat. Si no entra directament, desactiva "Confirm email" a Supabase → Auth → Providers (vegeu LLEGEIX-ME.md) o confirma des del teu correu.','ok');
+}
+async function doLogin(){
+  const {data,error} = await sb.auth.signInWithPassword({email:$('auth-email').value.trim(),password:$('auth-pass').value});
+  if(error) return show('auth-msg',error.message,'err');
+  user = data.user; afterLogin();
+}
+async function doLogout(){ await sb.auth.signOut();
+  [LS.baby,LS.sessions,LS.feedings].forEach(k=>localStorage.removeItem(k)); location.reload(); }
+
+async function afterLogin(){
+  const {data:babies} = await sb.from('babies').select('*').limit(1);
+  if (!babies || !babies.length){ return switchScreen('baby'); }
+  baby = babies[0];
+  localStorage.setItem(LS.baby, JSON.stringify(baby));
+  await loadData();
+  subscribeRealtime();
+  flushQueue();
+  enterApp();
+}
+
+async function saveBaby(){
+  const name=$('baby-name').value.trim(), birth=$('baby-birth').value;
+  if(!name||!birth) return show('baby-msg','Omple el nom i la data','err');
+  const {data,error} = await sb.from('babies').insert({user_id:user.id,name,birthdate:birth}).select().single();
+  if(error) return show('baby-msg',error.message,'err');
+  baby=data; localStorage.setItem(LS.baby, JSON.stringify(baby));
+  await loadData(); subscribeRealtime(); enterApp();
+}
+async function updateBaby(){
+  const name=$('set-name').value.trim(), birth=$('set-birth').value;
+  if(!name||!birth) return show('set-msg','Omple el nom i la data','err');
+  const {error} = await sb.from('babies').update({name,birthdate:birth}).eq('id',baby.id);
+  if(error) return show('set-msg',error.message,'err');
+  baby.name=name; baby.birthdate=birth; localStorage.setItem(LS.baby, JSON.stringify(baby));
+  show('set-msg','Desat ✓','ok'); renderAll();
+}
+
+/* ───────── Dades: càrrega, cua offline, realtime ───────── */
+function loadLocal(k){ try{return JSON.parse(localStorage.getItem(k))||[]}catch(e){return []} }
+function persistLocal(){
+  localStorage.setItem(LS.sessions, JSON.stringify(sessions));
+  localStorage.setItem(LS.feedings, JSON.stringify(feedings));
+}
+function arrFor(tbl){ return tbl==='feedings' ? feedings : sessions; }
+function setArr(tbl, a){ if(tbl==='feedings') feedings=a; else sessions=a; }
+
+async function loadData(){
+  const since = new Date(Date.now()-30*864e5).toISOString();
+  const [s,f] = await Promise.all([
+    sb.from('sleep_sessions').select('*').eq('baby_id',baby.id).gte('start_at',since).order('start_at',{ascending:true}),
+    sb.from('feedings').select('*').eq('baby_id',baby.id).gte('start_at',since).order('start_at',{ascending:true})
+  ]);
+  sessions = (!s.error && s.data) ? s.data : loadLocal(LS.sessions);
+  feedings = (!f.error && f.data) ? f.data : loadLocal(LS.feedings);
+  persistLocal();
+}
+
+function getQueue(){ try{return JSON.parse(localStorage.getItem(LS.queue))||[]}catch(e){return []} }
+function pushQueue(op){ const q=getQueue(); q.push(op); localStorage.setItem(LS.queue,JSON.stringify(q)); updateSyncDot(); }
+async function flushQueue(){
+  if(!sb || !user || !navigator.onLine) return;
+  let q = getQueue();
+  while(q.length){
+    const op = q[0]; let error = null;
+    if(op.t==='insert') ({error} = await sb.from(op.tbl).insert(op.p));
+    if(op.t==='update') ({error} = await sb.from(op.tbl).update(op.p).eq('id',op.id));
+    if(op.t==='delete') ({error} = await sb.from(op.tbl).delete().eq('id',op.id));
+    if(error && error.message && /fetch|network/i.test(error.message)) break; // encara offline
+    q.shift(); localStorage.setItem(LS.queue,JSON.stringify(q));
+  }
+  updateSyncDot();
+}
+function updateSyncDot(){
+  const n=getQueue().length;
+  $('syncdot').textContent = n ? `⏳ ${n} per sincronitzar` : '☁️ sincronitzat';
+}
+
+function subscribeRealtime(){
+  try{
+    sb.channel('dl-sync')
+      .on('postgres_changes',{event:'*',schema:'public',table:'sleep_sessions',filter:`baby_id=eq.${baby.id}`},
+        async ()=>{ await loadData(); renderAll(); })
+      .on('postgres_changes',{event:'*',schema:'public',table:'feedings',filter:`baby_id=eq.${baby.id}`},
+        async ()=>{ await loadData(); renderAll(); })
+      .subscribe();
+  }catch(e){}
+}
+
+/* mutacions optimistes + cua (tbl = 'sleep_sessions' | 'feedings') */
+async function dbInsert(tbl, row){
+  const a = arrFor(tbl); a.push(row); a.sort((x,y)=>x.start_at.localeCompare(y.start_at)); persistLocal();
+  const {error} = navigator.onLine ? await sb.from(tbl).insert(row) : {error:{message:'offline'}};
+  if(error) pushQueue({t:'insert',tbl,p:row}); updateSyncDot();
+}
+async function dbUpdate(tbl, id, patch){
+  const s = arrFor(tbl).find(x=>x.id===id); if(s) Object.assign(s,patch); persistLocal();
+  const {error} = navigator.onLine ? await sb.from(tbl).update(patch).eq('id',id) : {error:{message:'offline'}};
+  if(error) pushQueue({t:'update',tbl,id,p:patch}); updateSyncDot();
+}
+async function dbDelete(tbl, id){
+  setArr(tbl, arrFor(tbl).filter(x=>x.id!==id)); persistLocal();
+  const {error} = navigator.onLine ? await sb.from(tbl).delete().eq('id',id) : {error:{message:'offline'}};
+  if(error) pushQueue({t:'delete',tbl,id}); updateSyncDot();
+}
+
+/* ───────── Lògica de son ───────── */
+function ongoing(){ return sessions.find(s=>!s.end_at) || null; }
+
+function defaultWW(){ // finestra de vigília per edat (minuts)
+  const w = ageWeeks();
+  if (w<=4) return 50;  if (w<=8) return 65;  if (w<=12) return 80;
+  if (w<=17) return 95; if (w<=26) return 135; if (w<=34) return 165;
+  if (w<=43) return 195; if (w<=52) return 215; if (w<=78) return 250; return 300;
+}
+function defaultBedHour(){ const w=ageWeeks(); return w<=8 ? 21.0 : w<=26 ? 19.75 : 19.5; }
+
+// finestres reals observades (darrers 7 dies, 6:00–21:30, entre 20 min i 6 h)
+function observedWW(){
+  const out=[]; const since=Date.now()-7*864e5;
+  const done = sessions.filter(s=>s.end_at && new Date(s.end_at)>since)
+                       .sort((a,b)=>a.start_at.localeCompare(b.start_at));
+  for(let i=0;i<done.length-1;i++){
+    const gap = new Date(done[i+1].start_at) - new Date(done[i].end_at);
+    const h = new Date(done[i].end_at).getHours();
+    if(gap>=20*60000 && gap<=6*3600000 && h>=6 && h<=21) out.push(mins(gap));
+  }
+  return out;
+}
+function median(a){ if(!a.length) return null; const s=[...a].sort((x,y)=>x-y); const m=Math.floor(s.length/2); return s.length%2?s[m]:(s[m-1]+s[m])/2; }
+
+function adaptedWW(){
+  const def = defaultWW();
+  const obs = median(observedWW());
+  if(obs==null) return def;
+  const blended = 0.5*def + 0.5*obs;
+  return Math.round(Math.min(def*1.3, Math.max(def*0.7, blended)));
+}
+
+function prediction(){
+  const og = ongoing();
+  const ww = adaptedWW();
+  const now = new Date();
+  const done = sessions.filter(s=>s.end_at);
+  const lastEnd = done.length ? new Date(done[done.length-1].end_at) : null;
+  const wakeRef = og ? null : (lastEnd && lastEnd < now ? lastEnd : now);
+
+  const bed = new Date(now); const bh = defaultBedHour();
+  bed.setHours(Math.floor(bh), Math.round((bh%1)*60), 0, 0);
+
+  let nap = null;
+  if (!og && wakeRef){
+    const todayDone = done.filter(s=>dayKey(s.end_at)===dayKey(now));
+    const isFirst = todayDone.filter(s=>new Date(s.end_at).getHours()>=5).length<=1;
+    const factor = isFirst ? 0.92 : 1.0;
+    nap = new Date(wakeRef.getTime() + ww*factor*60000);
+    if (nap > new Date(bed.getTime()-45*60000)) nap = null; // ja toca llit, no migdiada
+  }
+  return { nap, bed, ww };
+}
+
+async function toggleSleep(){
+  const og = ongoing();
+  if (og){
+    await dbUpdate('sleep_sessions', og.id, {end_at: new Date().toISOString()});
+  } else {
+    const h = new Date().getHours();
+    const kind = (h>=18 || h<6) ? 'night' : 'nap';
+    await dbInsert('sleep_sessions', { id:uuid(), user_id:user?user.id:baby.user_id, baby_id:baby.id,
+      start_at:new Date().toISOString(), end_at:null, kind });
+  }
+  renderAll();
+}
+
+/* ───────── Notificacions ───────── */
+function askNotif(){ if('Notification' in window) Notification.requestPermission().then(scheduleNotif); }
+function scheduleNotif(){
+  if(!('Notification' in window) || Notification.permission!=='granted') return;
+  clearTimeout(notifTimer);
+  const p = prediction();
+  if(!p.nap) return;
+  const t = p.nap.getTime() - 15*60000 - Date.now();
+  if(t>0 && t<12*3600000){
+    notifTimer = setTimeout(()=>{
+      try{ navigator.serviceWorker.ready.then(r=>r.showNotification('🌙 Dormilega',
+        {body:`La migdiada de ${baby.name} toca a les ${fmtT(p.nap)} (d'aquí a ~15 min)`, icon:'icons/icon-192.png'})); }
+      catch(e){ new Notification('🌙 Dormilega',{body:`Migdiada a les ${fmtT(p.nap)}`}); }
+    }, t);
+  }
+}
+
+/* ───────── Render ───────── */
+function switchScreen(name){
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  $('scr-'+name).classList.add('active');
+  $('mainNav').classList.toggle('hidden', !['home','log','stats','settings'].includes(name));
+}
+function go(name){
+  switchScreen(name);
+  document.querySelectorAll('nav .tab').forEach(t=>t.classList.toggle('active',t.dataset.scr===name));
+  if(name==='stats') renderStats();
+  if(name==='log') renderLog();
+  if(name==='settings') renderSettings();
+}
+function enterApp(){ switchScreen('home'); renderAll(); setInterval(tick,30000); tick(); updateSyncDot(); }
+
+function renderAll(){ renderHome(); renderLog(); renderStats(); renderSettings(); scheduleNotif(); }
+
+function tick(){
+  const og = ongoing();
+  const done = sessions.filter(s=>s.end_at);
+  const ref = og ? new Date(og.start_at) : (done.length? new Date(done[done.length-1].end_at): null);
+  if(ref){
+    const el = mins(Date.now()-ref);
+    $('st-timer').textContent = `${Math.floor(el/60)}:${String(el%60).padStart(2,'0')}`;
+  } else $('st-timer').textContent='--:--';
+}
+
+function renderHome(){
+  if(!baby) return;
+  $('home-title').textContent = `${baby.name}`;
+  $('home-age').textContent = `${ageLabel()} · finestra de vigília ~${adaptedWW()} min`;
+  const og = ongoing();
+  const c = $('statusCircle');
+  c.classList.toggle('sleeping', !!og);
+  $('st-emoji').textContent = og ? '😴' : '☀️';
+  $('st-label').textContent = og ? (og.kind==='night'?'dormint (nit)':'fent la migdiada') : 'temps despert';
+  const btn=$('mainBtn');
+  btn.textContent = og ? "☀️ S'ha despertat" : '😴 Comença a dormir';
+  btn.classList.toggle('wake', !!og);
+
+  const p = prediction();
+  $('pred-nap').textContent = p.nap ? fmtT(p.nap) : '—';
+  $('pred-nap-sub').textContent = p.nap ? (p.nap<new Date()?'ja toca!':`d'aquí a ${fmtDur(p.nap-new Date())}`) : 'avui ja no toca';
+  $('pred-bed').textContent = fmtT(p.bed);
+  $('pred-bed-sub').textContent = "segons l'edat";
+  tick();
+
+  const today = mergedItems().filter(it=>dayKey(it.start_at)===dayKey(new Date()));
+  $('todayList').innerHTML = today.length ? today.map(itemRow).join('') :
+    '<p class="sub" style="margin:0">Encara no hi ha registres</p>';
+}
+
+/* llista combinada son + preses */
+function mergedItems(){
+  const a = sessions.map(s=>({...s,_tbl:'sleep_sessions'}));
+  const b = feedings.map(f=>({...f,_tbl:'feedings'}));
+  return [...a,...b].sort((x,y)=>x.start_at.localeCompare(y.start_at));
+}
+function feedAmounts(f){
+  const qi=f.amount_start, qf=f.amount_end;
+  if(qi==null && qf==null) return 'pit';
+  const cons=(qi!=null&&qf!=null)? `${Math.max(0,qi-qf)} ml` : '';
+  return `${qi??'?'}→${qf??'?'} ml${cons?` · ${cons}`:''}`;
+}
+function itemRow(it){
+  if(it._tbl==='feedings'){
+    const dur = it.end_at ? fmtDur(new Date(it.end_at)-new Date(it.start_at)) : 'en curs…';
+    return `<div class="sess" onclick="openFeed('${it.id}')">
+      <div><span class="badge feed">Presa</span></div>
+      <div class="times">${fmtT(it.start_at)}${it.end_at?` – ${fmtT(it.end_at)}`:''}</div>
+      <div class="dur">${feedAmounts(it)}<br>${dur}</div></div>`;
+  }
+  const dur = it.end_at ? fmtDur(new Date(it.end_at)-new Date(it.start_at)) : 'en curs…';
+  return `<div class="sess" onclick="openEditor('${it.id}')">
+    <div><span class="badge ${it.kind}">${it.kind==='nap'?'Migdiada':'Nit'}</span></div>
+    <div class="times">${fmtT(it.start_at)} – ${it.end_at?fmtT(it.end_at):'···'}</div>
+    <div class="dur">${dur}</div></div>`;
+}
+
+function renderLog(){
+  const byDay = {};
+  mergedItems().reverse().forEach(it=>{ (byDay[dayKey(it.start_at)] ||= []).push(it); });
+  const keys = Object.keys(byDay);
+  $('logList').innerHTML = keys.length ? keys.map(k=>{
+    const its = byDay[k];
+    const tot = its.filter(s=>s._tbl==='sleep_sessions'&&s.end_at)
+      .reduce((a,s)=>a+(new Date(s.end_at)-new Date(s.start_at)),0);
+    const ml = its.filter(s=>s._tbl==='feedings')
+      .reduce((a,f)=>a+((f.amount_start!=null&&f.amount_end!=null)?Math.max(0,f.amount_start-f.amount_end):0),0);
+    const extra = ml? ` · 🍼 ${ml} ml`:'';
+    return `<div class="daylbl">${fmtD(k+'T12:00')} · 😴 ${fmtDur(tot)}${extra}</div>
+      <div class="card">${its.map(itemRow).join('')}</div>`;
+  }).join('') : '<div class="card"><p class="sub" style="margin:0">Encara no hi ha res registrat</p></div>';
+}
+
+/* ───────── Estadístiques ───────── */
+function statsData(){
+  const days=[];
+  for(let i=13;i>=0;i--){ const d=new Date(); d.setDate(d.getDate()-i); days.push(dayKey(d)); }
+  const napH={}, nightH={}, wakes={}, wwByDay={}, feedMl={}, feedN={};
+  days.forEach(k=>{napH[k]=0;nightH[k]=0;wakes[k]=0;wwByDay[k]=[];feedMl[k]=0;feedN[k]=0});
+  const done = sessions.filter(s=>s.end_at).sort((a,b)=>a.start_at.localeCompare(b.start_at));
+  done.forEach(s=>{
+    const k=dayKey(s.start_at); if(!(k in napH)) return;
+    const h=(new Date(s.end_at)-new Date(s.start_at))/3600000;
+    if(s.kind==='nap') napH[k]+=h; else nightH[k]+=h;
+  });
+  const nightStarts={};
+  done.filter(s=>s.kind==='night').forEach(s=>{
+    const d=new Date(s.start_at); const h=d.getHours();
+    const nd=new Date(d); if(h<12) nd.setDate(nd.getDate()-1);
+    const k=dayKey(nd); (nightStarts[k] ||= 0); nightStarts[k]++;
+  });
+  Object.keys(nightStarts).forEach(k=>{ if(k in wakes) wakes[k]=Math.max(0,nightStarts[k]-1); });
+  for(let i=0;i<done.length-1;i++){
+    const gap=new Date(done[i+1].start_at)-new Date(done[i].end_at);
+    const h=new Date(done[i].end_at).getHours(); const k=dayKey(done[i].end_at);
+    if(gap>=20*60000 && gap<=6*3600000 && h>=6 && h<=21 && (k in wwByDay)) wwByDay[k].push(mins(gap));
+  }
+  feedings.forEach(f=>{
+    const k=dayKey(f.start_at); if(!(k in feedMl)) return;
+    feedN[k]++;
+    if(f.amount_start!=null && f.amount_end!=null) feedMl[k]+=Math.max(0,f.amount_start-f.amount_end);
+  });
+  return {days, napH, nightH, wakes, wwByDay, feedMl, feedN};
+}
+
+function renderStats(){
+  if(!document.getElementById('ch-sleep')) return;
+  const {days, napH, nightH, wakes, wwByDay, feedMl, feedN} = statsData();
+  const lbl = days.map(k=>k.slice(8)+'/'+k.slice(5,7));
+  const totals = days.map(k=>napH[k]+nightH[k]).filter(v=>v>0);
+  $('k-total').textContent = totals.length? (totals.reduce((a,b)=>a+b,0)/totals.length).toFixed(1)+' h':'–';
+  const napCounts = days.map(k=>sessions.filter(s=>s.kind==='nap'&&dayKey(s.start_at)===k).length).filter(v=>v>0);
+  $('k-naps').textContent = napCounts.length? (napCounts.reduce((a,b)=>a+b,0)/napCounts.length).toFixed(1):'–';
+  const allWW = days.flatMap(k=>wwByDay[k]);
+  $('k-ww').textContent = allWW.length? Math.round(allWW.reduce((a,b)=>a+b,0)/allWW.length)+' min':'–';
+  const wk = days.map(k=>wakes[k]).filter((v,i)=>napH[days[i]]+nightH[days[i]]>0);
+  $('k-wakes').textContent = wk.length? (wk.reduce((a,b)=>a+b,0)/wk.length).toFixed(1):'–';
+  const fN = days.map(k=>feedN[k]).filter(v=>v>0);
+  $('k-feeds').textContent = fN.length? (fN.reduce((a,b)=>a+b,0)/fN.length).toFixed(1):'–';
+  const fMl = days.map(k=>feedMl[k]).filter(v=>v>0);
+  $('k-ml').textContent = fMl.length? Math.round(fMl.reduce((a,b)=>a+b,0)/fMl.length)+' ml':'–';
+
+  const common = {responsive:true, plugins:{legend:{labels:{color:'#9d9cc7',boxWidth:12}}},
+    scales:{x:{ticks:{color:'#9d9cc7'},grid:{color:'rgba(255,255,255,.05)'}},
+            y:{ticks:{color:'#9d9cc7'},grid:{color:'rgba(255,255,255,.07)'},beginAtZero:true}}};
+
+  mkChart('ch-sleep',{type:'bar',data:{labels:lbl,datasets:[
+    {label:'Nit',data:days.map(k=>+nightH[k].toFixed(2)),backgroundColor:'#38bdf8',stack:'s'},
+    {label:'Migdiades',data:days.map(k=>+napH[k].toFixed(2)),backgroundColor:'#a78bfa',stack:'s'}]},
+    options:{...common, scales:{...common.scales, x:{...common.scales.x,stacked:true}, y:{...common.scales.y,stacked:true}}}});
+
+  mkChart('ch-ww',{type:'line',data:{labels:lbl,datasets:[{label:'Minuts',
+    data:days.map(k=>wwByDay[k].length?Math.round(wwByDay[k].reduce((a,b)=>a+b,0)/wwByDay[k].length):null),
+    borderColor:'#fcd34d',backgroundColor:'rgba(252,211,77,.15)',spanGaps:true,tension:.3,fill:true}]},
+    options:common});
+
+  mkChart('ch-wakes',{type:'bar',data:{labels:lbl,datasets:[{label:'Despertars',
+    data:days.map(k=>wakes[k]),backgroundColor:'#fb7185'}]},options:common});
+
+  mkChart('ch-feed',{type:'bar',data:{labels:lbl,datasets:[{label:'ml consumits',
+    data:days.map(k=>feedMl[k]),backgroundColor:'#34d399'}]},options:common});
+}
+function mkChart(id,cfg){ if(charts[id]) charts[id].destroy(); charts[id]=new Chart($(id).getContext('2d'),cfg); }
+
+/* ───────── Editor de son ───────── */
+let editId=null;
+function toLocalInput(d){ const x=new Date(d); x.setMinutes(x.getMinutes()-x.getTimezoneOffset()); return x.toISOString().slice(0,16); }
+function openEditor(id){
+  editId=id;
+  const s = id? sessions.find(x=>x.id===id):null;
+  $('ed-title').textContent = s? 'Editar registre':'Afegir registre';
+  $('ed-kind').value = s? s.kind:'nap';
+  $('ed-start').value = s? toLocalInput(s.start_at): toLocalInput(new Date(Date.now()-3600000));
+  $('ed-end').value = s&&s.end_at? toLocalInput(s.end_at): (s? '': toLocalInput(new Date()));
+  $('ed-del').classList.toggle('hidden',!s);
+  $('ed-msg').innerHTML='';
+  $('editor').showModal();
+}
+function closeEditor(){ $('editor').close(); }
+async function saveEditor(){
+  const start=$('ed-start').value, end=$('ed-end').value, kind=$('ed-kind').value;
+  if(!start) return show('ed-msg',"Falta l'hora d'inici",'err');
+  if(end && new Date(end)<=new Date(start)) return show('ed-msg','El final ha de ser posterior a l\'inici','err');
+  const payload={kind, start_at:new Date(start).toISOString(), end_at: end? new Date(end).toISOString():null};
+  if(editId) await dbUpdate('sleep_sessions',editId,payload);
+  else await dbInsert('sleep_sessions',{id:uuid(), user_id:user?user.id:baby.user_id, baby_id:baby.id, ...payload});
+  closeEditor(); renderAll();
+}
+async function deleteFromEditor(){ if(editId){ await dbDelete('sleep_sessions',editId); } closeEditor(); renderAll(); }
+
+/* ───────── Editor de preses ───────── */
+let feedId=null;
+function openFeed(id){
+  feedId=id;
+  const f = id? feedings.find(x=>x.id===id):null;
+  $('fd-title').textContent = f? 'Editar presa':'Registrar presa';
+  $('fd-start').value = f? toLocalInput(f.start_at): toLocalInput(new Date());
+  $('fd-end').value = f&&f.end_at? toLocalInput(f.end_at):'';
+  $('fd-qini').value = f&&f.amount_start!=null? f.amount_start:'';
+  $('fd-qfin').value = f&&f.amount_end!=null? f.amount_end:'';
+  $('fd-del').classList.toggle('hidden',!f);
+  $('fd-msg').innerHTML='';
+  $('feeditor').showModal();
+}
+function closeFeed(){ $('feeditor').close(); }
+async function saveFeed(){
+  const start=$('fd-start').value, end=$('fd-end').value;
+  const qi=$('fd-qini').value, qf=$('fd-qfin').value;
+  if(!start) return show('fd-msg',"Falta l'hora d'inici",'err');
+  if(end && new Date(end)<=new Date(start)) return show('fd-msg','El final ha de ser posterior a l\'inici','err');
+  const ai = qi===''? null: Number(qi), af = qf===''? null: Number(qf);
+  if(ai!=null && af!=null && af>ai) return show('fd-msg','La quantitat final no pot ser més gran que la inicial','err');
+  const payload={ start_at:new Date(start).toISOString(), end_at: end? new Date(end).toISOString():null,
+    amount_start:ai, amount_end:af };
+  if(feedId) await dbUpdate('feedings',feedId,payload);
+  else await dbInsert('feedings',{id:uuid(), user_id:user?user.id:baby.user_id, baby_id:baby.id, ...payload});
+  closeFeed(); renderAll();
+}
+async function deleteFeed(){ if(feedId){ await dbDelete('feedings',feedId); } closeFeed(); renderAll(); }
+
+/* ───────── Ajustos / export ───────── */
+function renderSettings(){
+  if(!baby) return;
+  $('set-name').value=baby.name; $('set-birth').value=baby.birthdate;
+  $('acct-info').textContent = user? `Sessió: ${user.email}`:'Mode offline';
+}
+function exportData(){
+  const blob=new Blob([JSON.stringify({baby,sessions,feedings},null,2)],{type:'application/json'});
+  const a=document.createElement('a'); a.href=URL.createObjectURL(blob);
+  a.download=`dormilega-export-${dayKey(new Date())}.json`; a.click();
+}
+function show(id,txt,cls){ $(id).innerHTML=`<div class="msg ${cls}">${txt}</div>`; }
+
+boot();
+</script>
+</body>
+</html>
