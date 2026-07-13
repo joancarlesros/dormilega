@@ -175,7 +175,10 @@
 <section id="scr-home" class="screen">
   <div class="row">
     <div><h1 id="home-title">Hola</h1><p class="sub" id="home-age"></p></div>
-    <div id="syncdot" style="font-size:.72rem;color:var(--muted)"></div>
+    <div style="text-align:right">
+      <button class="small secondary" id="refreshBtn" onclick="doRefresh()" style="margin-bottom:4px">↻</button>
+      <div id="syncdot" style="font-size:.72rem;color:var(--muted)"></div>
+    </div>
   </div>
 
   <div class="statuscircle" id="statusCircle">
@@ -296,14 +299,13 @@
   <div class="grid2">
     <div><label>Biberó preparat (ml)</label><input id="fd-qini" type="number" inputmode="decimal" min="0" step="5" placeholder="120"></div>
     <div><label>Quant n'ha pres?</label><select id="fd-frac">
-      <option value="">— (pit / no ho sé)</option>
       <option value="1">Tot (100%)</option>
       <option value="0.75">Gairebé tot (75%)</option>
       <option value="0.5">La meitat (50%)</option>
       <option value="0.25">Una mica (25%)</option>
     </select></div>
   </div>
-  <p class="sub" style="margin:8px 0 0">Els ml presos es calculen sols (biberó × fracció). Si és pit, deixa-ho en blanc.</p>
+  <p class="sub" style="margin:8px 0 0">Els ml presos es calculen sols (biberó × fracció). Per defecte s'assumeix que se l'acaba tot.</p>
   <div id="fd-msg"></div>
   <div class="modal-actions">
     <button class="secondary" onclick="closeFeed()">Cancel·lar</button>
@@ -594,6 +596,12 @@ function go(name){
 }
 function enterApp(){ switchScreen('home'); renderAll(); setInterval(tick,30000); tick(); updateSyncDot(); }
 
+async function doRefresh(){
+  const b=$('refreshBtn'); b.disabled=true; b.textContent='…';
+  try{ await flushQueue(); await loadData(); renderAll(); }catch(e){}
+  b.disabled=false; b.textContent='↻';
+}
+
 function renderAll(){ renderHome(); renderLog(); renderStats(); renderSettings(); scheduleNotif(); }
 
 function tick(){
@@ -640,7 +648,7 @@ function mergedItems(){
 const LOC={bressol:'🛏️',cotxet:'🚼',cotxe:'🚗',bracos:'🤱',llit_pares:'🛌',altres:'📍'};
 function feedAmounts(f){
   const qi=f.amount_start, qf=f.amount_end;
-  if(qi==null && qf==null) return 'pit';
+  if(qi==null && qf==null) return '—';
   if(qi!=null && qf!=null) return `${Math.max(0,qi-qf)}/${qi} ml`;
   return `${qi??'?'} ml`;
 }
@@ -984,7 +992,7 @@ function openFeed(id){
   $('fd-start').value = f? toLocalInput(f.start_at): toLocalInput(new Date());
   $('fd-end').value = f&&f.end_at? toLocalInput(f.end_at):'';
   $('fd-qini').value = f&&f.amount_start!=null? f.amount_start:'';
-  let frac='';
+  let frac='1';
   if(f && f.amount_start>0 && f.amount_end!=null){
     const c=1-(f.amount_end/f.amount_start);
     frac=[1,0.75,0.5,0.25].reduce((a,b)=>Math.abs(b-c)<Math.abs(a-c)?b:a);
@@ -1001,7 +1009,7 @@ async function saveFeed(){
   if(!start) return show('fd-msg',"Falta l'hora d'inici",'err');
   if(end && new Date(end)<=new Date(start)) return show('fd-msg','El final ha de ser posterior a l\'inici','err');
   const ai = qi===''? null: Number(qi);
-  const af = (ai!=null && fr!=='')? Math.round(ai*(1-Number(fr))) : null;
+  const af = ai!=null? Math.round(ai*(1-Number(fr||1))) : null;
   const payload={ start_at:new Date(start).toISOString(), end_at: end? new Date(end).toISOString():null,
     amount_start:ai, amount_end:af };
   if(feedId) await dbUpdate('feedings',feedId,payload);
@@ -1025,6 +1033,6 @@ function show(id,txt,cls){ $(id).innerHTML=`<div class="msg ${cls}">${txt}</div>
 
 boot();
 </script>
-<!-- Dormilega v8 -->
+<!-- Dormilega v9 -->
 </body>
 </html>
