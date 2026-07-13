@@ -23,7 +23,9 @@
   html,body{margin:0;padding:0;background:var(--bg);color:var(--text);
     font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
     min-height:100%; overscroll-behavior-y:none}
-  body{padding-bottom:calc(76px + env(safe-area-inset-bottom))}
+  html{-webkit-text-size-adjust:100%}
+  body{padding-top:env(safe-area-inset-top);
+    padding-bottom:calc(76px + env(safe-area-inset-bottom))}
   .screen{display:none;padding:18px 16px 24px;max-width:520px;margin:0 auto}
   .screen.active{display:block}
   h1{font-size:1.5rem;margin:8px 0 4px}
@@ -88,7 +90,18 @@
   .chartbox{background:var(--card);border-radius:var(--radius);padding:14px;margin-bottom:14px}
   .chartbox h3{margin:0 0 10px;font-size:.95rem;color:var(--muted);font-weight:600}
   .offline{position:fixed;top:0;left:0;right:0;background:#b45309;color:#fff;text-align:center;
-    font-size:.78rem;padding:4px;z-index:99}
+    font-size:.78rem;padding:calc(4px + env(safe-area-inset-top)) 4px 4px;z-index:99}
+  .scorebadge{min-width:58px;height:58px;border-radius:50%;display:flex;align-items:center;
+    justify-content:center;font-weight:700;font-size:1.15rem;border:3px solid var(--ok);
+    font-variant-numeric:tabular-nums}
+  .scorebadge small{font-size:.6rem;color:var(--muted);font-weight:500;margin-left:1px}
+  .ins{display:flex;gap:10px;padding:11px 0;border-bottom:1px solid rgba(255,255,255,.06);
+    align-items:flex-start}
+  .ins:last-child{border-bottom:none}
+  .ins .em{font-size:1.25rem;line-height:1.4}
+  .ins .tt{font-weight:600;font-size:.9rem}
+  .ins .tx{color:var(--muted);font-size:.82rem;margin-top:2px;line-height:1.4}
+  .ins.warn .tt{color:var(--warn)} .ins.ok .tt{color:var(--ok)} .ins.info .tt{color:var(--moon)}
   dialog{border:none;border-radius:20px;background:var(--card);color:var(--text);
     width:min(92vw,420px);padding:20px}
   dialog::backdrop{background:rgba(0,0,0,.6)}
@@ -188,6 +201,11 @@
 <section id="scr-stats" class="screen">
   <h1>Estadístiques</h1>
   <p class="sub">Darrers 14 dies</p>
+  <div class="card">
+    <div class="row"><h2 style="margin:0">🧠 Recomanacions</h2><div class="scorebadge" id="sleepScore">–</div></div>
+    <div id="insightsList"></div>
+    <p class="sub" style="margin:12px 0 0;font-size:.7rem">Heurístiques calculades amb les teves dades i rangs de referència publicats (National Sleep Foundation, AAP). No és consell mèdic: davant de qualsevol dubte, pediatre.</p>
+  </div>
   <div class="kpis">
     <div class="kpi"><div class="v" id="k-total">–</div><div class="l">Son mitjà / dia</div></div>
     <div class="kpi"><div class="v" id="k-naps">–</div><div class="l">Migdiades / dia</div></div>
@@ -659,8 +677,122 @@ function statsData(){
   return {days, napH, nightH, wakes, wwByDay, feedMl, feedN};
 }
 
+/* ───────── Motor de recomanacions (estil biohacker, evidència NSF/AAP) ───────── */
+function ageSleepRange(){ const w=ageWeeks();
+  return w<14?{lo:14,hi:17}:w<48?{lo:12,hi:15}:{lo:11,hi:14}; }
+function typicalWakes(){ const w=ageWeeks(); return w<14?[2,4]:w<26?[1,3]:w<52?[0,2]:[0,1]; }
+function stdev(a){ if(a.length<2) return null; const m=a.reduce((x,y)=>x+y,0)/a.length;
+  return Math.sqrt(a.reduce((s,v)=>s+(v-m)*(v-m),0)/(a.length-1)); }
+
+function buildInsights(){
+  const D = statsData();
+  const last7 = D.days.slice(-7);
+  const act = last7.filter(k=>D.napH[k]+D.nightH[k]>0);
+  const ins=[]; let score=100;
+  const w=ageWeeks(), rng=ageSleepRange();
+  const push=(e,s,t,x)=>ins.push({e,s,t,x});
+  if(act.length<3){
+    push('📈','info','Encara poques dades','Registra 3–4 dies complets (son i preses) i aquí apareixeran recomanacions personalitzades amb un índex de son.');
+    return {ins, score:null};
+  }
+  // 1) Son total vs. rang per edat
+  const tot = act.reduce((a,k)=>a+D.napH[k]+D.nightH[k],0)/act.length;
+  if(tot<rng.lo-0.5){ score-=20; push('🛌','warn',`Son total baix: ${tot.toFixed(1)} h/dia`,
+    `Referència a ${ageLabel()}: ${rng.lo}–${rng.hi} h. Prova d'avançar el llit 20–30 min i protegir la primera migdiada del matí, que és la més reparadora.`); }
+  else if(tot>rng.hi+0.5) push('🛌','info',`Son total alt: ${tot.toFixed(1)} h/dia`,
+    `Per sobre del rang típic (${rng.lo}–${rng.hi} h). En nadons sol ser normal; si a més costa despertar-lo per menjar, comenta-ho al pediatre.`);
+  else push('✅','ok',`Son total en rang: ${tot.toFixed(1)} h/dia`,
+    `Dins de la referència (${rng.lo}–${rng.hi} h) per a ${ageLabel()}.`);
+  // 2) Finestres de vigília observades vs. típiques
+  const obs = median(observedWW()), def = defaultWW();
+  if(obs!=null){
+    if(obs>def*1.25){ score-=10; push('⏱️','warn',`Finestres llargues: ~${Math.round(obs)} min (típic ~${def})`,
+      "Vigília massa llarga → sobrecansament (cortisol amunt) → costa més adormir-se i migdiades més curtes. Escurça-les 10–15 min uns dies i observa l'efecte."); }
+    else if(obs<def*0.75) push('⏱️','info',`Finestres curtes: ~${Math.round(obs)} min (típic ~${def})`,
+      'Si les migdiades surten curtes i el llit nocturn es retarda, allarga la vigília 10 min de manera gradual.');
+    else push('⏱️','ok',`Finestres ben calibrades: ~${Math.round(obs)} min`,
+      `Alineades amb el rang típic de l'edat (~${def} min).`);
+  }
+  // 3) Consistència de l'hora de llit (senyal circadiari)
+  const bedMins=[];
+  sessions.filter(s=>s.kind==='night' && new Date(s.start_at)>Date.now()-7*864e5)
+    .forEach(s=>{const d=new Date(s.start_at),h=d.getHours(); if(h>=17&&h<=23) bedMins.push(h*60+d.getMinutes());});
+  const bstd = stdev(bedMins);
+  if(bstd!=null){
+    if(bstd>45){ score-=12; push('🕰️','warn',`Hora de llit variable (±${Math.round(bstd)} min)`,
+      "La regularitat horària és el senyal d'entrenament circadiari més potent. Fixa el llit dins d'una franja de ±20–30 min amb una rutina curta idèntica (bany → presa → fosc)."); }
+    else push('🕰️','ok',`Hora de llit consistent (±${Math.round(bstd)} min)`,
+      'La regularitat reforça el rellotge circadiari i allarga els trams nocturns.');
+  }
+  // 4) Confusió dia-nit (nounats)
+  if(w<10){
+    const day = act.reduce((a,k)=>a+D.napH[k],0), night = act.reduce((a,k)=>a+D.nightH[k],0);
+    if(day+night>0 && day/(day+night)>0.55){ score-=8; push('🌗','warn','Possible confusió dia-nit',
+      `${Math.round(100*day/(day+night))}% del son és diürn. Palanca principal: llum. Molta llum natural i activitat de dia; foscor total, llum càlida tènue i estimulació mínima de nit. El ritme circadiari madura cap a les 8–12 setmanes.`); }
+  }
+  // 5) Migdiades curtes (a partir de ~3 mesos)
+  const napsDone = sessions.filter(s=>s.kind==='nap'&&s.end_at&&new Date(s.start_at)>Date.now()-7*864e5);
+  if(w>=12 && napsDone.length>=4){
+    const short = napsDone.filter(s=>(new Date(s.end_at)-new Date(s.start_at))<45*60000).length/napsDone.length;
+    if(short>0.6){ score-=8; push('⚡','warn',`${Math.round(short*100)}% de migdiades de <45 min`,
+      "Migdiades d'un sol cicle solen indicar finestra prèvia mal ajustada o entorn millorable. Prova foscor total + soroll blanc constant i mou la finestra ±10 min."); }
+  }
+  // 6) Despertars nocturns vs. típic per edat
+  const twk=typicalWakes();
+  const wkAvg = act.map(k=>D.wakes[k]).reduce((a,b)=>a+b,0)/act.length;
+  if(wkAvg>twk[1]+0.5){ score-=10; push('🌙','warn',`Despertars nocturns alts: ${wkAvg.toFixed(1)}/nit`,
+    `Típic a ${ageLabel()}: ${twk[0]}–${twk[1]}. Revisa tres coses: última presa massa d'hora, temperatura de l'habitació (19–21 °C) i massa son diürn tardà.`); }
+  else push('🌙','ok',`Despertars nocturns: ${wkAvg.toFixed(1)}/nit`,
+    `Dins del típic (${twk[0]}–${twk[1]}) per a l'edat. Els despertars breus són fisiològics: els cicles duren ~50 min.`);
+  // 7) Tram nocturn més llarg
+  const stretch = {};
+  sessions.filter(s=>s.kind==='night'&&s.end_at&&new Date(s.start_at)>Date.now()-7*864e5).forEach(s=>{
+    const d=new Date(s.start_at); const nd=new Date(d); if(d.getHours()<12) nd.setDate(nd.getDate()-1);
+    const k=dayKey(nd); const len=(new Date(s.end_at)-new Date(s.start_at))/3600000;
+    stretch[k]=Math.max(stretch[k]||0,len);
+  });
+  const strs=Object.values(stretch);
+  if(strs.length){
+    const mx=Math.max(...strs);
+    push('🌌','info',`Tram nocturn més llarg: ${mx.toFixed(1)} h`,
+      (w<6 && mx>5) ? 'A les primeres setmanes, pregunta al pediatre si cal despertar-lo per menjar en trams tan llargs (depèn del pes i la corba de creixement).' :
+      "Aquest tram s'allarga amb l'edat; la consistència d'horaris i la foscor nocturna l'acceleren.");
+  }
+  // 8) Alimentació
+  const fAct = last7.filter(k=>D.feedN[k]>0);
+  if(fAct.length>=3){
+    const nAvg=fAct.reduce((a,k)=>a+D.feedN[k],0)/fAct.length;
+    const mlAvg=fAct.reduce((a,k)=>a+D.feedMl[k],0)/fAct.length;
+    const mlTxt=mlAvg>0?` · ~${Math.round(mlAvg)} ml/dia`:'';
+    push('🍼','info',`Preses: ${nAvg.toFixed(1)}/dia${mlTxt}`,
+      w<14 ? 'Referència a aquesta edat: 8–12 preses/24 h (pit) o ~150 ml per kg i dia (biberó). Mira la tendència setmanal més que el dia a dia.' :
+      'Caigudes sostingudes de volum juntament amb més despertars solen precedir brots de creixement o molèsties (dents, refredats).');
+    if(fAct.length>=6){
+      const half=Math.floor(fAct.length/2);
+      const a1=fAct.slice(0,half).reduce((a,k)=>a+D.feedMl[k],0)/half;
+      const a2=fAct.slice(half).reduce((a,k)=>a+D.feedMl[k],0)/(fAct.length-half);
+      if(a1>0 && Math.abs(a2-a1)/a1>0.2) push('📉','info',`Canvi de volum: ${a2>a1?'+':''}${Math.round(100*(a2-a1)/a1)}% aquesta mitja setmana`,
+        a2>a1 ? 'Augment marcat: típic dels brots de creixement (~3 i ~6 setmanes, ~3 mesos). El son es pot desorganitzar 2–4 dies; és transitori.' :
+        'Descens marcat: si persisteix 2–3 dies més o hi ha menys bolquers molls, consulta el pediatre.');
+    }
+  }
+  score=Math.max(35,Math.min(100,Math.round(score)));
+  return {ins, score};
+}
+
+function renderInsights(){
+  const {ins,score}=buildInsights();
+  const sc=$('sleepScore');
+  if(score==null){ sc.textContent='–'; sc.style.borderColor='var(--muted)'; }
+  else { sc.innerHTML=`${score}<small>/100</small>`;
+    sc.style.borderColor = score>=85?'var(--ok)':score>=70?'var(--moon)':'var(--warn)'; }
+  $('insightsList').innerHTML = ins.map(i=>
+    `<div class="ins ${i.s}"><div class="em">${i.e}</div><div><div class="tt">${i.t}</div><div class="tx">${i.x}</div></div></div>`).join('');
+}
+
 function renderStats(){
   if(!document.getElementById('ch-sleep')) return;
+  renderInsights();
   const {days, napH, nightH, wakes, wwByDay, feedMl, feedN} = statsData();
   const lbl = days.map(k=>k.slice(8)+'/'+k.slice(5,7));
   const totals = days.map(k=>napH[k]+nightH[k]).filter(v=>v>0);
@@ -769,5 +901,6 @@ function show(id,txt,cls){ $(id).innerHTML=`<div class="msg ${cls}">${txt}</div>
 
 boot();
 </script>
+<!-- Dormilega v3 -->
 </body>
 </html>
