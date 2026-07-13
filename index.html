@@ -66,7 +66,7 @@
   .badge.nap{background:rgba(167,139,250,.2);color:var(--nap)}
   .badge.night{background:rgba(56,189,248,.18);color:var(--night)}
   .badge.feed{background:rgba(52,211,153,.16);color:var(--feed)}
-  .sess{display:flex;align-items:center;justify-content:space-between;padding:11px 0;gap:8px;
+  .sess{display:grid;grid-template-columns:88px 1fr auto;align-items:center;padding:11px 0;gap:8px;
     border-bottom:1px solid rgba(255,255,255,.06)}
   .sess:last-child{border-bottom:none}
   .sess .times{font-weight:600;font-variant-numeric:tabular-nums}
@@ -105,6 +105,12 @@
   .ins .tt{font-weight:600;font-size:.9rem}
   .ins .tx{color:var(--muted);font-size:.82rem;margin-top:2px;line-height:1.4}
   .ins.warn .tt{color:var(--warn)} .ins.ok .tt{color:var(--ok)} .ins.info .tt{color:var(--moon)}
+  .inssum{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:12px}
+  .inssum .chip{background:var(--bg2);border-radius:12px;padding:8px 4px;text-align:center}
+  .inssum .v{font-weight:700;font-size:.95rem}
+  .inssum .l{font-size:.62rem;color:var(--muted);margin-top:2px}
+  .inshdr{margin:16px 0 2px;font-size:.78rem;font-weight:700;text-transform:uppercase;letter-spacing:.06em}
+  .inshdr.hson{color:var(--accent)} .inshdr.halim{color:var(--feed)}
   dialog{border:none;border-radius:20px;background:var(--card);color:var(--text);
     width:min(92vw,420px);padding:20px}
   dialog::backdrop{background:rgba(0,0,0,.6)}
@@ -206,6 +212,7 @@
   <p class="sub">Darrers 14 dies</p>
   <div class="card">
     <div class="row"><h2 style="margin:0">🧠 Recomanacions</h2><div class="scorebadge" id="sleepScore">–</div></div>
+    <div class="inssum" id="insSummary"></div>
     <div id="insightsList"></div>
     <p class="sub" style="margin:12px 0 0;font-size:.7rem">Heurístiques calculades amb les teves dades i rangs de referència publicats (National Sleep Foundation, AAP). No és consell mèdic: davant de qualsevol dubte, pediatre.</p>
   </div>
@@ -218,8 +225,10 @@
     <div class="kpi"><div class="v" id="k-ml">–</div><div class="l">ml / dia</div></div>
   </div>
   <div class="chartbox"><h3>Hores de son per dia</h3><canvas id="ch-sleep" height="200"></canvas></div>
+  <div class="chartbox"><h3>Hora de despertar i d'anar al llit</h3><canvas id="ch-bedwake" height="180"></canvas></div>
   <div class="chartbox"><h3>Finestra de vigília mitjana (min)</h3><canvas id="ch-ww" height="180"></canvas></div>
   <div class="chartbox"><h3>Despertars nocturns</h3><canvas id="ch-wakes" height="180"></canvas></div>
+  <div class="chartbox"><h3>Repartiment dia / nit (14 dies)</h3><canvas id="ch-daynight" height="200"></canvas></div>
   <div class="chartbox"><h3>Alimentació (ml per dia)</h3><canvas id="ch-feed" height="180"></canvas></div>
 </section>
 
@@ -259,6 +268,16 @@
   <h2 style="margin-top:0" id="ed-title">Registre de son</h2>
   <label>Tipus</label>
   <select id="ed-kind"><option value="nap">Migdiada</option><option value="night">Son nocturn</option></select>
+  <label>On dorm?</label>
+  <select id="ed-loc">
+    <option value="">—</option>
+    <option value="bressol">Bressol</option>
+    <option value="cotxet">Cotxet</option>
+    <option value="cotxe">Cotxe</option>
+    <option value="bracos">En braços / contacte</option>
+    <option value="llit_pares">Llit dels pares</option>
+    <option value="altres">Altres</option>
+  </select>
   <label>Inici</label><input id="ed-start" type="datetime-local">
   <label>Fi (buit = encara dorm)</label><input id="ed-end" type="datetime-local">
   <div id="ed-msg"></div>
@@ -278,10 +297,10 @@
     <div><label>Biberó preparat (ml)</label><input id="fd-qini" type="number" inputmode="decimal" min="0" step="5" placeholder="120"></div>
     <div><label>Quant n'ha pres?</label><select id="fd-frac">
       <option value="">— (pit / no ho sé)</option>
-      <option value="1">Tot</option>
-      <option value="0.85">Gairebé tot</option>
-      <option value="0.5">La meitat</option>
-      <option value="0.25">Una mica</option>
+      <option value="1">Tot (100%)</option>
+      <option value="0.75">Gairebé tot (75%)</option>
+      <option value="0.5">La meitat (50%)</option>
+      <option value="0.25">Una mica (25%)</option>
     </select></div>
   </div>
   <p class="sub" style="margin:8px 0 0">Els ml presos es calculen sols (biberó × fracció). Si és pit, deixa-ho en blanc.</p>
@@ -537,7 +556,8 @@ async function toggleSleep(){
     const h = new Date().getHours();
     const kind = (h>=18 || h<6) ? 'night' : 'nap';
     await dbInsert('sleep_sessions', { id:uuid(), user_id:user?user.id:baby.user_id, baby_id:baby.id,
-      start_at:new Date().toISOString(), end_at:null, kind });
+      start_at:new Date().toISOString(), end_at:null, kind,
+      location: localStorage.getItem('dl_lastloc')||null });
   }
   renderAll();
 }
@@ -606,7 +626,7 @@ function renderHome(){
   $('pred-bed-sub').textContent = "segons l'edat";
   tick();
 
-  const today = mergedItems().filter(it=>dayKey(it.start_at)===dayKey(new Date()));
+  const today = mergedItems().filter(it=>dayKey(it.start_at)===dayKey(new Date())).reverse();
   $('todayList').innerHTML = today.length ? today.map(itemRow).join('') :
     '<p class="sub" style="margin:0">Encara no hi ha registres</p>';
 }
@@ -617,6 +637,7 @@ function mergedItems(){
   const b = feedings.map(f=>({...f,_tbl:'feedings'}));
   return [...a,...b].sort((x,y)=>x.start_at.localeCompare(y.start_at));
 }
+const LOC={bressol:'🛏️',cotxet:'🚼',cotxe:'🚗',bracos:'🤱',llit_pares:'🛌',altres:'📍'};
 function feedAmounts(f){
   const qi=f.amount_start, qf=f.amount_end;
   if(qi==null && qf==null) return 'pit';
@@ -633,7 +654,7 @@ function itemRow(it){
   }
   const dur = it.end_at ? fmtDur(new Date(it.end_at)-new Date(it.start_at)) : 'en curs…';
   return `<div class="sess" onclick="openEditor('${it.id}')">
-    <div><span class="badge ${it.kind}">${it.kind==='nap'?'Migdiada':'Nit'}</span></div>
+    <div><span class="badge ${it.kind}">${it.kind==='nap'?'Migdiada':'Nit'}</span>${it.location?' '+(LOC[it.location]||''):''}</div>
     <div class="times">${fmtT(it.start_at)} – ${it.end_at?fmtT(it.end_at):'···'}</div>
     <div class="dur">${dur}</div></div>`;
 }
@@ -683,7 +704,15 @@ function statsData(){
     feedN[k]++;
     if(f.amount_start!=null && f.amount_end!=null) feedMl[k]+=Math.max(0,f.amount_start-f.amount_end);
   });
-  return {days, napH, nightH, wakes, wwByDay, feedMl, feedN};
+  // hora d'anar al llit i de despertar (derivades dels trams de nit)
+  const bedT={}, wakeT={};
+  done.filter(s=>s.kind==='night').forEach(s=>{
+    const st=new Date(s.start_at);
+    if(st.getHours()>=17){ const k=dayKey(st); if((k in napH) && bedT[k]==null) bedT[k]=st.getHours()+st.getMinutes()/60; }
+    const en=new Date(s.end_at);
+    if(en.getHours()>=5 && en.getHours()<12){ const k=dayKey(en); if(k in napH) wakeT[k]=en.getHours()+en.getMinutes()/60; }
+  });
+  return {days, napH, nightH, wakes, wwByDay, feedMl, feedN, bedT, wakeT};
 }
 
 /* ───────── Motor de recomanacions (estil biohacker, evidència NSF/AAP) ───────── */
@@ -732,6 +761,34 @@ function buildInsights(){
       "La regularitat horària és el senyal d'entrenament circadiari més potent. Fixa el llit dins d'una franja de ±20–30 min amb una rutina curta idèntica (bany → presa → fosc)."); }
     else push('🕰️','ok',`Hora de llit consistent (±${Math.round(bstd)} min)`,
       'La regularitat reforça el rellotge circadiari i allarga els trams nocturns.');
+  }
+  // 3b) Consistència del despertar del matí (àncora circadiària)
+  const wakeMins=[];
+  sessions.filter(s=>s.kind==='night'&&s.end_at&&new Date(s.end_at)>Date.now()-7*864e5).forEach(s=>{
+    const e=new Date(s.end_at); if(e.getHours()>=5&&e.getHours()<11) wakeMins.push(e.getHours()*60+e.getMinutes());
+  });
+  const wstd = stdev(wakeMins);
+  if(wstd!=null){
+    if(wstd>60){ score-=5; push('🌅','info',`Despertar del matí variable (±${Math.round(wstd)} min)`,
+      "L'hora de llevar-se és l'àncora del rellotge circadiari. Un despertar estable (±30 min) + llum natural al matí ordena la resta del dia."); }
+    else push('🌅','ok',`Despertar del matí estable (±${Math.round(wstd)} min)`,
+      'Una àncora matinal sòlida fa les migdiades i les nits més previsibles.');
+  }
+  // 3c) On dorm (objectiu: bressol tota la nit)
+  const locSess = sessions.filter(s=>s.end_at && s.location && new Date(s.start_at)>Date.now()-7*864e5);
+  if(!locSess.length){
+    push('🛏️','info','Registra on dorm',
+      "Marca el lloc a cada registre de son (bressol, braços, cotxet...) i seguiré el progrés cap a l'objectiu: dormir tota la nit al seu bressol.");
+  } else {
+    let lt=0, lc=0;
+    locSess.forEach(s=>{const d=new Date(s.end_at)-new Date(s.start_at); lt+=d; if(s.location==='bressol') lc+=d;});
+    const pct=Math.round(100*lc/lt);
+    if(w<12) push('🛏️', pct>=50?'ok':'info', `${pct}% del son al bressol`,
+      "A aquesta edat el son en braços o en contacte és habitual i no crea mals hàbits. Seguretat (AAP): a la vostra habitació però en la seva pròpia superfície, sempre de panxa enlaire, matalàs ferm i sense coixins ni mantes soltes.");
+    else if(pct<50){ score-=5; push('🛏️','warn',`${pct}% del son al bressol`,
+      "Per avançar cap al bressol: comença per la primera migdiada del dia i el tram inicial de la nit, deixant-lo somnolent però despert. Constància per sobre d'intensitat."); }
+    else push('🛏️','ok',`${pct}% del son al bressol`,
+      "Bon camí cap a l'objectiu de dormir tota la nit al bressol. Mantén l'entorn idèntic cada nit: foscor, mateix lloc, mateixa rutina.");
   }
   // 4) Confusió dia-nit (nounats)
   if(w<10){
@@ -785,24 +842,62 @@ function buildInsights(){
         'Descens marcat: si persisteix 2–3 dies més o hi ha menys bolquers molls, consulta el pediatre.');
     }
   }
+  // 8b) Preses nocturnes
+  const nFeeds={};
+  feedings.filter(f=>new Date(f.start_at)>Date.now()-7*864e5).forEach(f=>{
+    const d=new Date(f.start_at); const h=d.getHours();
+    if(h>=21 || h<6){ const nd=new Date(d); if(h<12) nd.setDate(nd.getDate()-1); const k=dayKey(nd); nFeeds[k]=(nFeeds[k]||0)+1; }
+  });
+  const nfVals=Object.values(nFeeds);
+  if(nfVals.length>=3){
+    const nfAvg=nfVals.reduce((a,b)=>a+b,0)/nfVals.length;
+    if(w<14) push('🌜','info',`Preses nocturnes: ${nfAvg.toFixed(1)}/nit`,
+      'A 0–3 mesos són esperables 2–4: el tram llarg de son creixerà amb la capacitat gàstrica. De nit, estímuls al mínim: llum tènue, sense jocs, bolquer només si cal.');
+    else if(nfAvg>2){ score-=5; push('🌜','info',`Preses nocturnes: ${nfAvg.toFixed(1)}/nit`,
+      'A partir dels 4–6 mesos, moltes preses nocturnes poden ser més hàbit que gana. Reforça la ingesta diürna i comenta amb el pediatre com espaiar-les.'); }
+    else push('🌜','ok',`Preses nocturnes: ${nfAvg.toFixed(1)}/nit`,
+      'Ben alineat amb la consolidació del son nocturn.');
+  }
+  // 8c) S'ho acaba sempre tot?
+  const bots = feedings.filter(f=>new Date(f.start_at)>Date.now()-7*864e5 && f.amount_start!=null && f.amount_end!=null);
+  if(bots.length>=5){
+    const totShare = bots.filter(f=>f.amount_end===0).length/bots.length;
+    if(totShare>0.8) push('➕','info',"S'acaba el biberó gairebé sempre",
+      `${Math.round(totShare*100)}% de biberons acabats del tot: pot ser que es quedi amb gana. Prova d'oferir 10–20 ml més i mira si en deixa (senyal que la mida ja és l'adequada).`);
+  }
   score=Math.max(35,Math.min(100,Math.round(score)));
   return {ins, score};
 }
 
+const ALIM_E=['🍼','📉','🌜','➕'];
 function renderInsights(){
   const {ins,score}=buildInsights();
   const sc=$('sleepScore');
   if(score==null){ sc.textContent='–'; sc.style.borderColor='var(--muted)'; }
   else { sc.innerHTML=`${score}<small>/100</small>`;
     sc.style.borderColor = score>=85?'var(--ok)':score>=70?'var(--moon)':'var(--warn)'; }
-  $('insightsList').innerHTML = ins.map(i=>
-    `<div class="ins ${i.s}"><div class="em">${i.e}</div><div><div class="tt">${i.t}</div><div class="tx">${i.x}</div></div></div>`).join('');
+  // resum de 3 indicadors
+  const D=statsData(); const act=D.days.slice(-7).filter(k=>D.napH[k]+D.nightH[k]>0);
+  const tot=act.length? act.reduce((a,k)=>a+D.napH[k]+D.nightH[k],0)/act.length:null;
+  const wk=act.length? act.map(k=>D.wakes[k]).reduce((a,b)=>a+b,0)/act.length:null;
+  const fA=D.days.slice(-7).filter(k=>D.feedN[k]>0);
+  const ml=fA.length? fA.reduce((a,k)=>a+D.feedMl[k],0)/fA.length:null;
+  $('insSummary').innerHTML = [
+    {v:tot!=null?tot.toFixed(1)+' h':'–', l:'Son / dia'},
+    {v:wk!=null?wk.toFixed(1):'–', l:'Despertars / nit'},
+    {v:ml!=null?Math.round(ml)+' ml':'–', l:'Alimentació / dia'}
+  ].map(c=>`<div class="chip"><div class="v">${c.v}</div><div class="l">${c.l}</div></div>`).join('');
+  const item=i=>`<div class="ins ${i.s}"><div class="em">${i.e}</div><div><div class="tt">${i.t}</div><div class="tx">${i.x}</div></div></div>`;
+  const son=ins.filter(i=>!ALIM_E.includes(i.e)), alim=ins.filter(i=>ALIM_E.includes(i.e));
+  $('insightsList').innerHTML =
+    (son.length? `<div class="inshdr hson">😴 Son</div>`+son.map(item).join(''):'') +
+    (alim.length? `<div class="inshdr halim">🍼 Alimentació</div>`+alim.map(item).join(''):'');
 }
 
 function renderStats(){
   if(!document.getElementById('ch-sleep')) return;
   renderInsights();
-  const {days, napH, nightH, wakes, wwByDay, feedMl, feedN} = statsData();
+  const {days, napH, nightH, wakes, wwByDay, feedMl, feedN, bedT, wakeT} = statsData();
   const lbl = days.map(k=>k.slice(8)+'/'+k.slice(5,7));
   const totals = days.map(k=>napH[k]+nightH[k]).filter(v=>v>0);
   $('k-total').textContent = totals.length? (totals.reduce((a,b)=>a+b,0)/totals.length).toFixed(1)+' h':'–';
@@ -834,6 +929,18 @@ function renderStats(){
   mkChart('ch-wakes',{type:'bar',data:{labels:lbl,datasets:[{label:'Despertars',
     data:days.map(k=>wakes[k]),backgroundColor:'#fb7185'}]},options:common});
 
+  const fmtH=v=>{const h=Math.floor(v),m=Math.round((v-h)*60);return String(h).padStart(2,'0')+':'+String(m).padStart(2,'0');};
+  mkChart('ch-bedwake',{type:'line',data:{labels:lbl,datasets:[
+    {label:'Despertar',data:days.map(k=>wakeT[k]??null),borderColor:'#fcd34d',backgroundColor:'rgba(252,211,77,.15)',spanGaps:true,tension:.3},
+    {label:'Al llit',data:days.map(k=>bedT[k]??null),borderColor:'#38bdf8',backgroundColor:'rgba(56,189,248,.15)',spanGaps:true,tension:.3}]},
+    options:{...common, scales:{...common.scales, y:{...common.scales.y, beginAtZero:false,
+      ticks:{...common.scales.y.ticks, callback:fmtH}}}}});
+
+  const dSum=days.reduce((a,k)=>a+napH[k],0), nSum=days.reduce((a,k)=>a+nightH[k],0);
+  mkChart('ch-daynight',{type:'doughnut',data:{labels:['Dia (migdiades)','Nit'],
+    datasets:[{data:[+dSum.toFixed(1),+nSum.toFixed(1)],backgroundColor:['#a78bfa','#38bdf8'],borderWidth:0}]},
+    options:{plugins:{legend:{labels:{color:'#9d9cc7',boxWidth:12}}}}});
+
   mkChart('ch-feed',{type:'bar',data:{labels:lbl,datasets:[{label:'ml consumits',
     data:days.map(k=>feedMl[k]),backgroundColor:'#34d399'}]},options:common});
 }
@@ -847,6 +954,7 @@ function openEditor(id){
   const s = id? sessions.find(x=>x.id===id):null;
   $('ed-title').textContent = s? 'Editar registre':'Afegir registre';
   $('ed-kind').value = s? s.kind:'nap';
+  $('ed-loc').value = s&&s.location? s.location:(localStorage.getItem('dl_lastloc')||'');
   $('ed-start').value = s? toLocalInput(s.start_at): toLocalInput(new Date(Date.now()-3600000));
   $('ed-end').value = s&&s.end_at? toLocalInput(s.end_at): (s? '': toLocalInput(new Date()));
   $('ed-del').classList.toggle('hidden',!s);
@@ -858,7 +966,9 @@ async function saveEditor(){
   const start=$('ed-start').value, end=$('ed-end').value, kind=$('ed-kind').value;
   if(!start) return show('ed-msg',"Falta l'hora d'inici",'err');
   if(end && new Date(end)<=new Date(start)) return show('ed-msg','El final ha de ser posterior a l\'inici','err');
-  const payload={kind, start_at:new Date(start).toISOString(), end_at: end? new Date(end).toISOString():null};
+  const loc=$('ed-loc').value||null;
+  if(loc) localStorage.setItem('dl_lastloc',loc);
+  const payload={kind, location:loc, start_at:new Date(start).toISOString(), end_at: end? new Date(end).toISOString():null};
   if(editId) await dbUpdate('sleep_sessions',editId,payload);
   else await dbInsert('sleep_sessions',{id:uuid(), user_id:user?user.id:baby.user_id, baby_id:baby.id, ...payload});
   closeEditor(); renderAll();
@@ -877,7 +987,7 @@ function openFeed(id){
   let frac='';
   if(f && f.amount_start>0 && f.amount_end!=null){
     const c=1-(f.amount_end/f.amount_start);
-    frac=[1,0.85,0.5,0.25].reduce((a,b)=>Math.abs(b-c)<Math.abs(a-c)?b:a);
+    frac=[1,0.75,0.5,0.25].reduce((a,b)=>Math.abs(b-c)<Math.abs(a-c)?b:a);
   }
   $('fd-frac').value=String(frac);
   $('fd-del').classList.toggle('hidden',!f);
@@ -915,6 +1025,6 @@ function show(id,txt,cls){ $(id).innerHTML=`<div class="msg ${cls}">${txt}</div>
 
 boot();
 </script>
-<!-- Dormilega v6 -->
+<!-- Dormilega v8 -->
 </body>
 </html>
