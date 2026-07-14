@@ -45,14 +45,13 @@
   button.small{width:auto;padding:8px 14px;font-size:.85rem;border-radius:10px}
   button.danger{background:transparent;color:var(--warn);border:1px solid var(--warn)}
   button:disabled{opacity:.5}
-  .bigbtn{margin:16px 0 8px;padding:22px;font-size:1.25rem;border-radius:24px;
-    background:linear-gradient(135deg,#7c6cf0,#a78bfa);box-shadow:0 8px 30px rgba(124,108,240,.4)}
-  .bigbtn.wake{background:linear-gradient(135deg,#f59e0b,#fcd34d);color:#3b2f00;
-    box-shadow:0 8px 30px rgba(252,211,77,.3)}
-  .feedbtn{background:linear-gradient(135deg,#059669,#34d399);margin:0 0 16px}
-  .diapbtn2{margin:0 0 16px;
-    background:linear-gradient(135deg,#db2777,#f472b6);color:#fff;
-    box-shadow:0 8px 30px rgba(236,72,153,.3)}
+  /* Botons d'acció grans amb l'estil "píndola" dels badges de l'historial */
+  .pillbtn{width:100%;margin:0 0 12px;padding:18px;font-size:1.08rem;font-weight:700;
+    border:1.5px solid;border-radius:999px;background:transparent;box-shadow:none}
+  .pillbtn:active{transform:scale(.99)}
+  .pillbtn.sleep{background:rgba(167,139,250,.18);color:var(--nap);border-color:rgba(167,139,250,.55)}
+  .pillbtn.feed{background:rgba(52,211,153,.16);color:var(--feed);border-color:rgba(52,211,153,.5)}
+  .pillbtn.diaper{background:rgba(244,114,182,.16);color:#f9a8d4;border-color:rgba(244,114,182,.5)}
   #ptr{position:fixed;top:calc(10px + env(safe-area-inset-top));left:50%;transform:translateX(-50%);
     background:var(--card2);border-radius:50%;width:38px;height:38px;display:none;align-items:center;
     justify-content:center;z-index:98;font-size:1.2rem;box-shadow:0 4px 14px rgba(0,0,0,.4)}
@@ -206,17 +205,12 @@
 
   <div class="pred" style="margin-top:8px">
     <div class="card">
-      <div class="lbl">😴 Propera migdiada <span id="pred-nap-ww"></span></div>
+      <div class="lbl">😴 Propera migdiada</div>
       <div class="time" id="pred-nap">--:--</div>
       <div class="lbl" id="pred-nap-sub"></div>
     </div>
     <div class="card">
-      <div class="lbl">🛌 Hora d'anar a dormir</div>
-      <div class="time" id="pred-bed">--:--</div>
-      <div class="lbl" id="pred-bed-sub"></div>
-    </div>
-    <div class="card">
-      <div class="lbl">🍼 Propera presa <span id="pred-feed-every"></span></div>
+      <div class="lbl">🍼 Propera presa</div>
       <div class="time" id="pred-feed">--:--</div>
       <div class="lbl" id="pred-feed-sub"></div>
     </div>
@@ -228,9 +222,9 @@
     <div class="lbl" id="st-label">despert</div>
   </div>
 
-  <button class="bigbtn" id="mainBtn" onclick="toggleSleep()">😴 Comença a dormir</button>
-  <button class="bigbtn feedbtn" id="feedBtnMain" onclick="openFeed(null)">🍼 Registrar presa de biberó</button>
-  <button class="bigbtn diapbtn2" onclick="openDiaper(null)">🩲 Registrar canvi de bolquer</button>
+  <button class="pillbtn sleep" id="mainBtn" onclick="toggleSleep()">😴 Comença a dormir</button>
+  <button class="pillbtn feed" id="feedBtnMain" onclick="openFeed(null)">🍼 Presa de biberó</button>
+  <button class="pillbtn diaper" onclick="openDiaper(null)">🩲 Canvi de bolquer</button>
 
   <h2>Avui</h2>
   <div class="daytotals" id="dayTotals"></div>
@@ -808,24 +802,14 @@ function renderHome(){
   $('st-emoji').textContent = og ? '😴' : '👶';
   $('st-label').textContent = og ? (og.kind==='night'?'dormint (nit)':'fent la migdiada') : 'despert';
   const btn=$('mainBtn');
-  btn.textContent = og ? "☀️ S'ha despertat" : '😴 Comença a dormir';
-  btn.classList.toggle('wake', !!og);
+  btn.textContent = og ? "😴 S'ha despertat" : '😴 Comença a dormir';
 
   const p = prediction();
   $('pred-nap').textContent = p.nap ? fmtT(p.nap) : '—';
   $('pred-nap-sub').textContent = p.nap ? (p.nap<new Date()?'ja toca!':`d'aquí a ${fmtDur(p.nap-new Date())}`) : (og? 'dormint ara':'avui ja no toca');
-  $('pred-nap-ww').textContent = `(finestra ~${adaptedWW()} min)`;
-
-  // Hora d'anar a dormir: objectiu per edat + franja ideal (d'on surt)
-  const bh=defaultBedHour();
-  const bedC=new Date(); bedC.setHours(Math.floor(bh), Math.round((bh%1)*60), 0, 0);
-  const b1=new Date(bedC.getTime()-20*60000), b2=new Date(bedC.getTime()+20*60000);
-  $('pred-bed').textContent = fmtT(bedC);
-  $('pred-bed-sub').textContent = `franja ${fmtT(b1)}–${fmtT(b2)}`;
 
   const lastF = feedings.length? new Date(feedings[feedings.length-1].start_at):null;
   const gapH = ageWeeks()<14?3:4;
-  $('pred-feed-every').textContent = `(cada ${gapH} h)`;
   const nf = lastF? new Date(lastF.getTime()+gapH*3600000):null;
   $('pred-feed').textContent = nf? fmtT(nf):'—';
   $('pred-feed-sub').textContent = nf?
@@ -848,8 +832,8 @@ function renderHome(){
     .reduce((a,f)=>a+((f.amount_start!=null&&f.amount_end!=null)?Math.max(0,f.amount_start-f.amount_end):0),0);
   $('dayTotals').innerHTML =
     `<div class="chip">🌙 ${fmtDur(nightMs)}<small>nit anterior</small></div>`+
-    `<div class="chip">☀️ ${fmtDur(dayMs)}<small>migdiades avui</small></div>`+
-    `<div class="chip">🍼 ${mlToday} ml<small>presos avui</small></div>`;
+    `<div class="chip">☀️ ${fmtDur(dayMs)}<small>migdiades</small></div>`+
+    `<div class="chip">🍼 ${mlToday} ml<small>presos</small></div>`;
   $('todayList').innerHTML = today.length ? today.map(itemRow).join('') :
     '<p class="sub" style="margin:0">Encara no hi ha registres</p>';
 }
@@ -1356,6 +1340,6 @@ function show(id,txt,cls){ $(id).innerHTML=`<div class="msg ${cls}">${txt}</div>
 
 boot();
 </script>
-<!-- Dormilega v20 -->
+<!-- Dormilega v22 -->
 </body>
 </html>
