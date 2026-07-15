@@ -53,22 +53,40 @@
   .pillbtn.sleep{background:rgba(167,139,250,.18);color:var(--nap);border-color:rgba(167,139,250,.55)}
   .pillbtn.feed{background:rgba(52,211,153,.16);color:var(--feed);border-color:rgba(52,211,153,.5)}
   .pillbtn.diaper{background:rgba(244,114,182,.16);color:#f9a8d4;border-color:rgba(244,114,182,.5)}
-  #ptr{position:fixed;top:calc(10px + env(safe-area-inset-top));left:50%;transform:translateX(-50%);
+  #ptr{position:fixed;top:calc(10px + env(safe-area-inset-top));left:50%;
     background:var(--card2);border-radius:50%;width:38px;height:38px;display:none;align-items:center;
-    justify-content:center;z-index:98;font-size:1.2rem;box-shadow:0 4px 14px rgba(0,0,0,.4)}
-  #ptr.on{display:flex;animation:ptrspin 1s linear infinite}
-  @keyframes ptrspin{to{transform:translateX(-50%) rotate(360deg)}}
-  .statuscircle{width:170px;height:170px;border-radius:50%;margin:14px auto;display:flex;
+    justify-content:center;z-index:98;font-size:1.2rem;color:var(--accent);
+    box-shadow:0 4px 14px rgba(0,0,0,.4), 0 0 0 0 rgba(167,139,250,.45)}
+  #ptr.on{display:flex;animation:ptrdrop .45s cubic-bezier(.2,1.5,.4,1), ptrspin .9s linear .45s infinite, ptrhalo 1.4s ease-out .45s infinite}
+  @keyframes ptrdrop{
+    0%{transform:translateX(-50%) translateY(-26px) scale(.5);opacity:0}
+    100%{transform:translateX(-50%) translateY(0) scale(1);opacity:1}}
+  @keyframes ptrspin{from{transform:translateX(-50%) rotate(0)}to{transform:translateX(-50%) rotate(360deg)}}
+  @keyframes ptrhalo{
+    0%{box-shadow:0 4px 14px rgba(0,0,0,.4), 0 0 0 0 rgba(167,139,250,.5)}
+    100%{box-shadow:0 4px 14px rgba(0,0,0,.4), 0 0 0 16px rgba(167,139,250,0)}}
+  @media (prefers-reduced-motion:reduce){ #ptr.on{animation:none;display:flex} }
+  .statuscircle{position:relative;width:170px;height:170px;border-radius:50%;margin:14px auto;display:flex;
     flex-direction:column;align-items:center;justify-content:center;gap:4px;
     background:radial-gradient(circle at 35% 30%, var(--card2), var(--bg2));
-    border:3px solid #fcd34d;text-align:center;box-shadow:0 0 22px rgba(252,211,77,.26);
-    animation:awakepulse 3s ease-in-out infinite;will-change:transform}
-  .statuscircle.sleeping{border-color:#818cf8;animation:breathe 4.2s ease-in-out infinite}
-  @keyframes awakepulse{0%,100%{transform:scale(1)}50%{transform:scale(1.025)}}
-  @keyframes breathe{
-    0%,100%{transform:scale(1);box-shadow:0 0 18px rgba(129,140,248,.28)}
-    50%{transform:scale(1.045);box-shadow:0 0 34px rgba(129,140,248,.55)}}
-  @media (prefers-reduced-motion:reduce){ .statuscircle,.statuscircle.sleeping{animation:none} }
+    border:3px solid #fcd34d;text-align:center;
+    animation:awakeglow 3s ease-in-out infinite}
+  /* Despert: pols expansiu curt (ritme viu, tipus "energia") — s'expandeix i es dissipa.
+     Adormit: respiració lenta i profunda. Cap dels dos mou el contingut. */
+  .statuscircle::after{content:'';position:absolute;inset:-9px;border-radius:50%;pointer-events:none;
+    border:2px solid rgba(252,211,77,.55);animation:awakering 2.6s cubic-bezier(.25,.6,.3,1) infinite;will-change:transform,opacity}
+  .statuscircle.sleeping{border-color:#818cf8;animation:breatheglow 4.2s ease-in-out infinite}
+  .statuscircle.sleeping::after{border-color:rgba(129,140,248,.65);animation:breathering 4.2s ease-in-out infinite}
+  @keyframes awakeglow{0%,100%{box-shadow:0 0 16px rgba(252,211,77,.22)}50%{box-shadow:0 0 26px rgba(252,211,77,.4)}}
+  /* pols: surt de la vora i es dissipa cap enfora, després pausa */
+  @keyframes awakering{
+    0%{transform:scale(1);opacity:.65}
+    35%{transform:scale(1.14);opacity:0}
+    100%{transform:scale(1.14);opacity:0}}
+  @keyframes breatheglow{0%,100%{box-shadow:0 0 16px rgba(129,140,248,.26)}50%{box-shadow:0 0 34px rgba(129,140,248,.55)}}
+  @keyframes breathering{0%,100%{transform:scale(1);opacity:.65}50%{transform:scale(1.1);opacity:.1}}
+  @media (prefers-reduced-motion:reduce){
+    .statuscircle,.statuscircle::after,.statuscircle.sleeping,.statuscircle.sleeping::after{animation:none}}
   .statuscircle .emoji{font-size:2.4rem}
   .statuscircle .t{font-size:1.6rem;font-weight:700;font-variant-numeric:tabular-nums}
   .statuscircle .lbl{font-size:.8rem;color:var(--muted)}
@@ -89,8 +107,6 @@
   .sess.awake .times{font-weight:500}
   .sess .times{font-weight:600;font-variant-numeric:tabular-nums}
   .sess .dur{color:var(--muted);font-size:.85rem;text-align:right}
-  .daylbl{color:var(--muted);font-size:.8rem;text-transform:uppercase;letter-spacing:.06em;
-    margin:18px 0 6px}
   nav{position:fixed;bottom:0;left:0;right:0;background:#181839;
     border-top:1px solid rgba(255,255,255,.08);transform:translateZ(0);
     display:flex;justify-content:space-around;padding:8px 4px calc(8px + env(safe-area-inset-bottom));z-index:50}
@@ -140,12 +156,20 @@
   .daytotals{display:flex;gap:8px;margin-top:10px}
   .daytotals .chip{flex:1;background:var(--card);border-radius:14px;padding:9px 6px;text-align:center;font-weight:700;font-size:.92rem}
   .daytotals .chip small{display:block;color:var(--muted);font-weight:500;font-size:.64rem;margin-top:2px}
-  .dtcmp{display:flex;gap:8px;margin-top:6px}
-  .dtcmp .c{flex:1;text-align:center;font-size:.62rem;line-height:1.55}
-  .dtcmp .lab{color:var(--muted)}
+  .dtcmp{display:flex;gap:8px;margin-top:5px}
+  .dtcmp .c{flex:1;text-align:center;font-size:.64rem;color:var(--muted)}
   .dtcmp .up{color:var(--ok);font-weight:600}
   .dtcmp .dn{color:var(--warn);font-weight:600}
   .dtcmp .eq{color:var(--muted)}
+  /* capçalera de dia a l'historial */
+  .daydate{font-size:1.05rem;font-weight:700;color:var(--text);margin:20px 0 2px;letter-spacing:0}
+  .daysum{color:var(--muted);font-size:.72rem;margin-bottom:8px}
+  /* avís temporal */
+  #toast{position:fixed;left:50%;bottom:calc(78px + env(safe-area-inset-bottom));transform:translate(-50%,14px);
+    background:var(--card2);color:var(--text);border:1px solid rgba(255,255,255,.12);
+    padding:11px 16px;border-radius:14px;font-size:.82rem;max-width:88%;text-align:center;
+    box-shadow:0 10px 30px rgba(0,0,0,.45);opacity:0;pointer-events:none;transition:.28s;z-index:120}
+  #toast.on{opacity:1;transform:translate(-50%,0)}
   dialog{border:none;border-radius:20px;background:var(--card);color:var(--text);
     width:min(92vw,420px);padding:20px}
   dialog::backdrop{background:rgba(0,0,0,.6)}
@@ -211,22 +235,21 @@
 
 <!-- ══════ AVUI ══════ -->
 <section id="scr-home" class="screen">
-  <div class="row">
-    <div style="width:100%">
-      <h1 id="home-title">Hola</h1>
-      <p class="sub" id="home-age" style="margin:0 0 2px"></p>
-      <div id="syncdot" style="font-size:.72rem;color:var(--muted);text-align:left"></div>
+  <div class="row" style="align-items:flex-end">
+    <div><h1 id="home-title">Hola</h1>
+      <p class="sub" id="home-age" style="margin:0"></p>
     </div>
+    <div id="syncdot" style="font-size:.72rem;color:var(--muted);text-align:right;white-space:nowrap"></div>
   </div>
 
   <div class="pred" style="margin-top:8px">
     <div class="card">
-      <div class="lbl">😴 Propera migdiada (est.)</div>
+      <div class="lbl">😴 Propera migdiada</div>
       <div class="time" id="pred-nap">--:--</div>
       <div class="lbl" id="pred-nap-sub"></div>
     </div>
     <div class="card">
-      <div class="lbl">🍼 Propera presa (est.)</div>
+      <div class="lbl">🍼 Propera presa</div>
       <div class="time" id="pred-feed">--:--</div>
       <div class="lbl" id="pred-feed-sub"></div>
     </div>
@@ -245,6 +268,7 @@
   <h2>Avui</h2>
   <div class="daytotals" id="dayTotals"></div>
   <div class="dtcmp" id="dayCompare"></div>
+  <p class="sub" id="dayCompareNote" style="font-size:.6rem;margin:3px 0 0;text-align:center"></p>
   <p class="sub" style="margin:26px 0 10px">Cronologia d'avui</p>
   <div class="card" id="todayList"><p class="sub" style="margin:0">Encara no hi ha registres</p></div>
 </section>
@@ -263,7 +287,15 @@
   <div class="card">
     <div class="row"><h2 style="margin:0">🧠 Recomanacions</h2><div class="scorebadge" id="sleepScore">–</div></div>
     <div id="insightsList"></div>
+    <div id="scoreTrendBox" class="hidden" style="margin-top:6px">
+      <h3 style="font-size:.8rem;color:var(--muted);margin:10px 0 6px">📈 Evolució de l'índex (30 dies)</h3>
+      <canvas id="ch-score" height="120"></canvas>
+    </div>
   </div>
+  <div class="card hidden" id="statsEmpty">
+    <p class="sub" style="margin:0">📊 Aquí apareixeran les gràfiques dels últims 14 dies quan hi hagi registres. Comença per registrar son i preses a la pantalla <b>Avui</b>: amb 2–3 dies ja es veuen tendències.</p>
+  </div>
+  <div id="statsCharts">
   <h2>😴 Son</h2>
   <div class="kpis">
     <div class="kpi"><div class="v" id="k-total">–</div><div class="l">😴 Son mitjà / dia</div></div>
@@ -282,18 +314,25 @@
     <div class="kpi"><div class="v" id="k-ml">–</div><div class="l">🥛 ml / dia</div></div>
   </div>
   <div class="chartbox"><h3>🍼 ml per dia</h3><canvas id="ch-feed" height="180"></canvas></div>
+  <h2>🚼 Bolquers</h2>
+  <div class="kpis">
+    <div class="kpi"><div class="v" id="k-diap">–</div><div class="l">🚼 Canvis / dia</div></div>
+    <div class="kpi"><div class="v" id="k-pee">–</div><div class="l">💧 Molls / dia</div></div>
+  </div>
+  <div class="chartbox"><h3>🚼 Bolquers per dia (💧 pipí · 💩 caca)</h3><canvas id="ch-diap" height="180"></canvas></div>
   <h2>⚖️ Creixement</h2>
   <div class="kpis">
     <div class="kpi"><div class="v" id="k-weight">–</div><div class="l">⚖️ Últim pes</div></div>
     <div class="kpi"><div class="v" id="k-target">–</div><div class="l">🎯 Ingesta objectiu / dia</div></div>
   </div>
   <div class="chartbox"><h3>⚖️ Pes vs banda OMS P3–P97 (kg)</h3><canvas id="ch-weight" height="200"></canvas></div>
+  </div>
 </section>
 
 <!-- ══════ AJUSTOS ══════ -->
 <section id="scr-settings" class="screen">
   <h1>Ajustos</h1>
-  <div class="card">
+  <div class="card" style="margin-top:18px">
     <h2 style="margin-top:0">👶 Nadó</h2>
     <label>Nom</label><input id="set-name">
     <label>Data de naixement</label><input id="set-birth" type="date">
@@ -331,12 +370,12 @@
     <p class="sub" style="margin-bottom:0"><b>Adaptació al teu nadó:</b> mediana de les finestres reals observades els últims 7 dies (només entre 6:00 i 21:30, i entre 20 min i 6 h), barrejada al 50/50 amb el valor per edat i acotada a ±30 % d'aquest. La primera finestra del dia s'escurça un 8 %.</p>
   </div>
   <div class="card">
-    <h2 style="margin-top:0">📅 Totals d'avui, comparatives i vigília</h2>
-    <p class="sub" style="margin-bottom:0"><b>Nit anterior</b> = son entre les 18:00 d'ahir i el despertar d'aquest matí (fi de l'últim tram de nit abans del migdia; si encara dorm, fins ara). <b>Migdiades</b> i <b>presos</b> són el total del dia en curs. Sota cada total es mostra la comparació <b>vs la teva mitjana dels últims 7 dies</b> (o dels dies disponibles mentrestant, indicat com "Nd"), en valor absolut i percentual: verd si estàs per sobre del teu propi valor de referència, vermell si per sota — no és cap judici, només el teu ritme. Com que migdiades i presos encara s'acumulen, la comparació es fa a la <b>mateixa hora del dia</b> (el que sols portar a aquesta hora) perquè sigui justa. <b>Vigília:</b> a la cronologia i a l'historial, el temps despert entre un son i el següent es marca amb 👶.</p>
+    <h2 style="margin-top:0">📅 Totals d'avui, vigília i índex</h2>
+    <p class="sub" style="margin-bottom:0"><b>Nit anterior</b> = son entre 1 h abans de l'hora de llit d'ahir i el despertar d'aquest matí (fi de l'últim tram de nit abans del migdia; si encara dorm, fins ara). <b>Migdiades</b> i <b>presos</b> són el total del dia en curs. Sota cada total, la comparació amb la teva <b>mitjana dels últims 7 dies</b> (o dels dies disponibles), sempre <b>a la mateixa hora del dia</b> perquè sigui justa: es compara el que sols portar acumulat a aquesta hora, no un dia sencer. Verd = per sobre del teu propi valor; vermell = per sota. No es compara amb cap norma: això ho fan les Recomanacions. <b>Vigília:</b> a la cronologia i a l'historial, el temps despert entre un son i el següent es marca amb 👶. <b>Índex de son:</b> es calcula amb els últims 7 dies (cal un mínim de 3 dies amb registres), de manera que canvia poc a poc; cada dia que obres l'app se'n desa una còpia al dispositiu i el gràfic "Evolució de l'índex" mostra els últims 30 dies desats. L'històric comença el dia que actives aquesta versió i es desa localment (no se sincronitza entre dispositius, però com que surt de les mateixes dades sincronitzades, cada dispositiu calcula el mateix valor).</p>
   </div>
   <div class="card">
     <h2 style="margin-top:0">🔮 Predicció de migdiada i presa</h2>
-    <p class="sub" style="margin-bottom:0"><b>Propera migdiada (est.)</b> = últim despertar + finestra adaptada; si l'última migdiada va ser curta (&lt;45 min o &lt;60 % de la teva migdiada mediana), la finestra s'escurça ~12 %, sempre acotada al ±30 % del valor per edat. Si la predicció cauria a menys de 45 min de l'hora de llit objectiu per edat (~21:00 fins als 2 mesos, ~19:45 fins als 6 m, ~19:30 després), es descarta. <b>Propera presa (est.)</b> = última presa + interval per edat (3 h fins a ~3 mesos, 4 h després); si l'última presa va ser petita (&lt;66 % de la teva mediana recent), s'avança proporcionalment, amb un terra de 2 h i com a molt 45 min abans. <b>Per què "(est.)":</b> no hi ha estudis que validin aquests temps exactes. Les "finestres de vigília" no són un concepte de la medicina del son (només tenen base indirecta en la pressió de son/adenosina), i les preses idealment segueixen els <b>senyals de gana</b> del nadó, no el rellotge (alimentació responsiva, AAP). Pren-les com a orientació flexible, mai com un horari. Migdiada vs. nit es classifica per l'hora d'inici (18:00–6:00 → nit). A les gràfiques, l'hora de despertar i d'anar al llit es deriven del primer i l'últim tram de nit.</p>
+    <p class="sub" style="margin-bottom:0"><b>Propera migdiada</b> = últim despertar + finestra adaptada; si l'última migdiada va ser curta (&lt;45 min o &lt;60 % de la teva migdiada mediana), la finestra s'escurça ~12 %, sempre acotada al ±30 % del valor per edat. Si la predicció cauria a menys de 45 min de l'hora de llit objectiu per edat (~21:00 fins als 2 mesos, ~19:45 fins als 6 m, ~19:30 després), es descarta. <b>Propera presa</b> = última presa + interval per edat (3 h fins a ~3 mesos, 4 h després); si l'última presa va ser petita (&lt;66 % de la teva mediana recent), s'avança proporcionalment, amb un terra de 2 h i com a molt 45 min abans. <b>Totes dues són estimacions, no un horari:</b> no hi ha estudis que validin aquests temps exactes. Les "finestres de vigília" no són un concepte de la medicina del son (només tenen base indirecta en la pressió de son/adenosina), i les preses idealment segueixen els <b>senyals de gana</b> del nadó, no el rellotge (alimentació responsiva, AAP). <b>Migdiada vs. nit:</b> és <b>nit</b> si el son comença a partir d'1 h abans de l'hora de llit per edat (≤2 mesos: des de les 20:00 · ≤6 m: 18:45 · +6 m: 18:30), si comença de matinada (abans de les 6:00), o si comença abans però s'allarga ≥45 min més enllà de l'hora de llit (una "migdiada" que de fet ja és la nit). La resta són migdiades. El tipus es recalcula en acabar el son, quan ja se'n coneix la durada, i l'edat es pren en la data del registre (no l'actual), de manera que l'històric antic també queda ben classificat. A l'editor pots <b>forçar-lo a mà</b> (😴 Migdiada / 🌙 Nit) per als casos frontera: si el fixes, deixa de recalcular-se sol i cap reclassificació automàtica no el tocarà. A les gràfiques, l'hora de despertar i d'anar al llit es deriven del primer i l'últim tram de nit.</p>
   </div>
   <div class="card">
     <h2 style="margin-top:0">😴 Rangs de son total</h2>
@@ -389,7 +428,14 @@
 <!-- ══════ EDITOR SON ══════ -->
 <dialog id="editor">
   <h2 style="margin-top:0" id="ed-title">Registre de son</h2>
-  <p class="sub" style="margin:4px 0 0">El tipus (migdiada o nit) es classifica sol segons l'hora d'inici.</p>
+  <p class="sub" style="margin:4px 0 0">El tipus es classifica sol segons l'hora de llit per edat. Només cal que el toquis si algun cas concret no quadra.</p>
+  <label>Tipus</label>
+  <select id="ed-kind" onchange="edKindHint()">
+    <option value="auto">✨ Automàtic</option>
+    <option value="nap">😴 Migdiada</option>
+    <option value="night">🌙 Nit</option>
+  </select>
+  <p class="sub" id="ed-kind-hint" style="margin:4px 0 0;font-size:.68rem"></p>
   <label>On dorm?</label>
   <select id="ed-loc">
     <option value="">—</option>
@@ -398,10 +444,11 @@
     <option value="cotxe">Cotxe</option>
     <option value="hamaca">Hamaca / Trip Trap</option>
     <option value="bracos">En braços</option>
+    <option value="motxilla">Motxilla</option>
     <option value="llit_pares">Llit dels pares</option>
   </select>
-  <label>Inici</label><input id="ed-start" type="datetime-local">
-  <label>Fi (buit = encara dorm)</label><input id="ed-end" type="datetime-local">
+  <label>Inici</label><input id="ed-start" type="datetime-local" oninput="edKindHint()">
+  <label>Fi (buit = encara dorm)</label><input id="ed-end" type="datetime-local" oninput="edKindHint()">
   <div id="ed-msg"></div>
   <div class="modal-actions">
     <button class="secondary" onclick="closeEditor()">Cancel·lar</button>
@@ -670,6 +717,34 @@ async function dbDelete(tbl, id){
 }
 
 /* ───────── Lògica de son ───────── */
+/* Reclassificació retroactiva (una sola vegada per dispositiu):
+   els registres antics es van desar amb la regla antiga (nit = a partir de les 18:00). */
+async function reclassifyHistory(){
+  if(!baby || localStorage.getItem('dl_reclass_bedtime')) return 0;
+  const oldRule = st => { const h=new Date(st).getHours(); return (h>=18||h<6)?'night':'nap'; };
+  const fixes=[];
+  sessions.forEach(s=>{
+    // només es corregeixen els que encara segueixen la regla antiga:
+    // si el tipus ja divergeix, algú l'ha fixat a mà i no s'hi toca
+    if(s.kind !== oldRule(s.start_at)) return;
+    const k=classifyKind(s.start_at, s.end_at);
+    if(k!==s.kind) fixes.push({id:s.id, kind:k});
+  });
+  for(const f of fixes) await dbUpdate('sleep_sessions', f.id, {kind:f.kind});
+  localStorage.setItem('dl_reclass_bedtime','1');
+  if(fixes.length){
+    const n=fixes.length;
+    setTimeout(()=>toast(`✅ ${n} ${n===1?'registre reclassificat':'registres reclassificats'} amb la nova regla de nit`),400);
+  }
+  return fixes.length;
+}
+function toast(msg){
+  let t=$('toast');
+  if(!t){ t=document.createElement('div'); t.id='toast'; document.body.appendChild(t); }
+  t.textContent=msg; t.classList.add('on');
+  clearTimeout(t._h); t._h=setTimeout(()=>t.classList.remove('on'),4000);
+}
+
 function ongoing(){ return sessions.find(s=>!s.end_at) || null; }
 
 function defaultWW(){ // finestra de vigília per edat (minuts)
@@ -678,7 +753,27 @@ function defaultWW(){ // finestra de vigília per edat (minuts)
   if (w<=17) return 95; if (w<=26) return 135; if (w<=34) return 165;
   if (w<=43) return 195; if (w<=52) return 215; if (w<=78) return 250; return 300;
 }
-function defaultBedHour(){ const w=ageWeeks(); return w<=8 ? 21.0 : w<=26 ? 19.75 : 19.5; }
+function ageWeeksAt(d){ return baby ? Math.max(0, Math.floor((new Date(d)-new Date(baby.birthdate+'T00:00'))/(7*864e5))) : 8; }
+function bedHourAt(d){ const w=ageWeeksAt(d); return w<=8 ? 21.0 : w<=26 ? 19.75 : 19.5; }
+function defaultBedHour(){ return bedHourAt(new Date()); }
+function bedDateFor(startLike){
+  const s=new Date(startLike), bh=bedHourAt(s), b=new Date(s);
+  b.setHours(Math.floor(bh), Math.round((bh%1)*60), 0, 0);
+  return b;
+}
+/* Nit = comença dins l'hora prèvia al llit (o després), o de matinada,
+   o bé comença abans però s'allarga ≥45 min més enllà de l'hora de llit. */
+function classifyKind(startLike, endLike){
+  const s=new Date(startLike), bh=bedHourAt(s);
+  const h=s.getHours()+s.getMinutes()/60;
+  if(h<6) return 'night';
+  if(h>=bh-1) return 'night';
+  if(endLike){
+    const e=new Date(endLike);
+    if(e.getTime() >= bedDateFor(s).getTime()+45*60000) return 'night';
+  }
+  return 'nap';
+}
 
 // finestres reals observades (darrers 7 dies, 6:00–21:30, entre 20 min i 6 h)
 function observedWW(){
@@ -739,12 +834,16 @@ function prediction(){
 async function toggleSleep(){
   const og = ongoing();
   if (og){
-    await dbUpdate('sleep_sessions', og.id, {end_at: new Date().toISOString()});
+    const end = new Date().toISOString();
+    // si el tipus s'ha fixat a mà (no coincideix amb l'automàtic d'inici), es respecta
+    const wasManual = og.kind !== classifyKind(og.start_at, null);
+    const patch = {end_at: end};
+    if(!wasManual) patch.kind = classifyKind(og.start_at, end);
+    await dbUpdate('sleep_sessions', og.id, patch);
   } else {
-    const h = new Date().getHours();
-    const kind = (h>=18 || h<6) ? 'night' : 'nap';
+    const now = new Date().toISOString();
     await dbInsert('sleep_sessions', { id:uuid(), user_id:user?user.id:baby.user_id, baby_id:baby.id,
-      start_at:new Date().toISOString(), end_at:null, kind,
+      start_at:now, end_at:null, kind:classifyKind(now, null),
       location: localStorage.getItem('dl_lastloc')||null });
   }
   renderAll();
@@ -793,7 +892,13 @@ function go(name){
   if(name==='log') renderLog();
   if(name==='settings') renderSettings();
 }
-function enterApp(){ switchScreen('home'); renderAll(); setInterval(tick,1000); tick(); updateSyncDot(); }
+function enterApp(){
+  switchScreen('home'); renderAll(); setInterval(tick,15000); tick(); updateSyncDot();
+  reclassifyHistory().then(n=>{ if(n) renderAll(); });
+  // en reobrir l'app o tornar a la pestanya, refresca de seguida
+  document.addEventListener('visibilitychange',()=>{ if(!document.hidden){ tick(); renderHome(); } });
+  window.addEventListener('focus',()=>{ tick(); renderHome(); });
+}
 
 let refreshing=false;
 async function doRefresh(){
@@ -806,6 +911,7 @@ async function doRefresh(){
   const rest=minShow-(Date.now()-t0);
   if(rest>0) await new Promise(r=>setTimeout(r,rest));
   $('ptr').classList.remove('on');
+  toast('✅ Actualitzat');
   updateSyncDot(); refreshing=false;
 }
 // estira cap avall (amb la pàgina a dalt de tot) per refrescar — funciona a totes les pantalles
@@ -824,11 +930,8 @@ function tick(){
   const done = sessions.filter(s=>s.end_at);
   const ref = og ? new Date(og.start_at) : (done.length? new Date(done[done.length-1].end_at): null);
   if(ref){
-    const s=Math.max(0,Math.floor((Date.now()-ref.getTime())/1000));
-    const h=Math.floor(s/3600), m=Math.floor((s%3600)/60), sec=s%60;
-    $('st-timer').textContent = h>0
-      ? `${h}:${String(m).padStart(2,'0')}:${String(sec).padStart(2,'0')}`
-      : `${m}:${String(sec).padStart(2,'0')}`;
+    const el = mins(Date.now()-ref);
+    $('st-timer').textContent = `${Math.floor(el/60)}:${String(el%60).padStart(2,'0')}`;
   } else $('st-timer').textContent='--:--';
 }
 
@@ -886,17 +989,18 @@ function renderHome(){
     `<div class="chip">🌙 ${fmtDur(nightMs)}<small>nit anterior</small></div>`+
     `<div class="chip">😴 ${fmtDur(dayMs)}<small>migdiades</small></div>`+
     `<div class="chip">🍼 ${mlToday} ml<small>presos</small></div>`;
-  // Comparativa vs mitjana de 7 dies (dels dies disponibles), ajustada a la mateixa hora del dia
+  // Comparativa vs la teva mitjana dels últims 7 dies, a la mateixa hora del dia
   const midnight=new Date(); midnight.setHours(0,0,0,0);
   const nowMs=Date.now()-midnight.getTime();
   const prevKeys=[]; for(let i=1;i<=7;i++) prevKeys.push(dayKey(new Date(Date.now()-i*864e5)));
   const nightVals=[1,2,3,4,5,6,7].map(i=>{ const v=nightSleepMs(new Date(Date.now()-i*864e5)); return v>0?v:null; });
   const napVals=prevKeys.map(k=> dayHasData(k)? napsMsUpTo(k,nowMs): null);
   const mlVals=prevKeys.map(k=> dayHasData(k)? mlUpTo(k,nowMs): null);
-  $('dayCompare').innerHTML =
-    cmp7(nightMs, nightVals, 'dur')+
-    cmp7(dayMs, napVals, 'dur')+
-    cmp7(mlToday, mlVals, 'ml');
+  $('dayCompare').innerHTML = cmp7(nightMs,nightVals,'dur')+cmp7(dayMs,napVals,'dur')+cmp7(mlToday,mlVals,'ml');
+  const nDays=Math.max(nightVals.filter(x=>x!=null).length, napVals.filter(x=>x!=null).length, mlVals.filter(x=>x!=null).length);
+  $('dayCompareNote').textContent = nDays
+    ? `comparat amb la teva mitjana ${nDays===1?"d'1 dia":`de ${nDays} dies`}, a aquesta mateixa hora`
+    : '';
   $('todayList').innerHTML = today.length ? today.map(itemRow).join('') :
     '<p class="sub" style="margin:0">Encara no hi ha registres</p>';
 }
@@ -925,7 +1029,10 @@ function withAwakeGaps(itemsAsc){
 /* ── Totals d'avui i comparatives ── */
 function nightSleepMs(refDate){
   const noon=new Date(refDate); noon.setHours(12,0,0,0);
-  const start=new Date(noon); start.setDate(start.getDate()-1); start.setHours(18,0,0,0);
+  const yest=new Date(noon); yest.setDate(yest.getDate()-1);
+  const bhY=bedHourAt(yest);
+  const start=new Date(yest);
+  start.setHours(Math.floor(bhY-1), Math.round(((bhY-1)%1)*60), 0, 0);  // 1 h abans del llit d'ahir
   const isToday = dayKey(refDate)===dayKey(new Date());
   let end=null;
   sessions.filter(s=>s.kind==='night'&&s.end_at).forEach(s=>{
@@ -943,6 +1050,17 @@ function nightSleepMs(refDate){
     if(ov>0) ms+=ov;
   });
   return ms;
+}
+const LOC={bressol:'🛏️',cotxet:'🛒',cotxe:'🚗',hamaca:'🪑',bracos:'🤱',motxilla:'🎒',llit_pares:'👨‍👩‍👦',altres:'📍'};
+function fracDonut(p){
+  const r=5, c=2*Math.PI*r;
+  return `<svg width="14" height="14" viewBox="0 0 14 14" style="vertical-align:-2px"><circle cx="7" cy="7" r="${r}" fill="none" stroke="rgba(255,255,255,.18)" stroke-width="2.4"/><circle cx="7" cy="7" r="${r}" fill="none" stroke="var(--feed)" stroke-width="2.4" stroke-linecap="round" stroke-dasharray="${(c*p).toFixed(1)} ${c.toFixed(1)}" transform="rotate(-90 7 7)"/></svg>`;
+}
+function feedAmounts(f){
+  const qi=f.amount_start, qf=f.amount_end;
+  if(qi==null && qf==null) return '—';
+  if(qi!=null && qf!=null) return `${Math.max(0,qi-qf)}/${qi} ml`;
+  return `${qi??'?'} ml`;
 }
 function napsMsUpTo(k, msOfDay){
   const day0=new Date(k+'T00:00:00').getTime(), cut=day0+msOfDay; let ms=0;
@@ -967,26 +1085,15 @@ function dayHasData(k){
 }
 function cmp7(today, vals, kind){
   const v=vals.filter(x=>x!=null);
-  const lab = v.length>=7? '7d' : `${v.length}d`;
-  if(!v.length) return `<div class="c"><span class="lab">—</span></div>`;
+  if(!v.length) return `<div class="c">—</div>`;
   const base=v.reduce((a,b)=>a+b,0)/v.length;
-  if(base<=0) return `<div class="c"><span class="lab">${lab}</span> —</div>`;
+  if(base<=0) return `<div class="c">—</div>`;
   const d=today-base, pct=Math.round(100*d/base);
   const cls=d>0?'up':(d<0?'dn':'eq'), sg=d>0?'+':(d<0?'−':'');
   const abs=kind==='ml'? `${sg}${Math.abs(Math.round(d))} ml` : `${sg}${fmtDur(Math.abs(d))}`;
-  return `<div class="c"><span class="lab">${lab}</span> <span class="${cls}">${abs} · ${sg}${Math.abs(pct)}%</span></div>`;
+  return `<div class="c"><span class="${cls}">${abs} · ${sg}${Math.abs(pct)}%</span></div>`;
 }
-const LOC={bressol:'🛏️',cotxet:'🛒',cotxe:'🚗',hamaca:'🪑',bracos:'🤱',llit_pares:'👨‍👩‍👦',altres:'📍'};
-function fracDonut(p){
-  const r=5, c=2*Math.PI*r;
-  return `<svg width="14" height="14" viewBox="0 0 14 14" style="vertical-align:-2px"><circle cx="7" cy="7" r="${r}" fill="none" stroke="rgba(255,255,255,.18)" stroke-width="2.4"/><circle cx="7" cy="7" r="${r}" fill="none" stroke="var(--feed)" stroke-width="2.4" stroke-linecap="round" stroke-dasharray="${(c*p).toFixed(1)} ${c.toFixed(1)}" transform="rotate(-90 7 7)"/></svg>`;
-}
-function feedAmounts(f){
-  const qi=f.amount_start, qf=f.amount_end;
-  if(qi==null && qf==null) return '—';
-  if(qi!=null && qf!=null) return `${Math.max(0,qi-qf)}/${qi} ml`;
-  return `${qi??'?'} ml`;
-}
+
 function itemRow(it){
   if(it._tbl==='awake'){
     return `<div class="sess awake">
@@ -1030,13 +1137,22 @@ function renderLog(){
   const keys = Object.keys(byDay).sort().reverse();                             // dies recents primer
   $('logList').innerHTML = keys.length ? keys.map(k=>{
     const its = byDay[k];
-    const tot = its.filter(s=>s._tbl==='sleep_sessions'&&s.end_at)
-      .reduce((a,s)=>a+(new Date(s.end_at)-new Date(s.start_at)),0);
-    const ml = its.filter(s=>s._tbl==='feedings')
-      .reduce((a,f)=>a+((f.amount_start!=null&&f.amount_end!=null)?Math.max(0,f.amount_start-f.amount_end):0),0);
-    const extra = ml? ` · 🍼 ${ml} ml`:'';
+    const sl = its.filter(s=>s._tbl==='sleep_sessions'&&s.end_at);
+    const dur=s=>new Date(s.end_at)-new Date(s.start_at);
+    const nightMs = sl.filter(s=>s.kind==='night').reduce((a,s)=>a+dur(s),0);
+    const napMs   = sl.filter(s=>s.kind==='nap').reduce((a,s)=>a+dur(s),0);
+    const napN    = sl.filter(s=>s.kind==='nap').length;
+    const feeds   = its.filter(s=>s._tbl==='feedings');
+    const ml = feeds.reduce((a,f)=>a+((f.amount_start!=null&&f.amount_end!=null)?Math.max(0,f.amount_start-f.amount_end):0),0);
+    const dp = its.filter(s=>s._tbl==='diapers').length;
+    const parts=[];
+    if(nightMs) parts.push(`🌙 ${fmtDur(nightMs)}`);
+    if(napMs||napN) parts.push(`😴 ${fmtDur(napMs)} (${napN})`);
+    if(feeds.length) parts.push(`🍼 ${feeds.length}${ml?` · ${ml} ml`:''}`);
+    if(dp) parts.push(`🚼 ${dp}`);
     const rows = withAwakeGaps(its).reverse();
-    return `<div class="daylbl">${fmtD(k+'T12:00')} · 😴 ${fmtDur(tot)}${extra}</div>
+    return `<div class="daydate">${fmtD(k+'T12:00')}</div>
+      <div class="daysum">${parts.join(' · ')||'sense registres'}</div>
       <div class="card">${rows.map(itemRow).join('')}</div>`;
   }).join('') : '<div class="card"><p class="sub" style="margin:0">Encara no hi ha res registrat</p></div>';
 }
@@ -1251,8 +1367,16 @@ function buildInsights(){
 }
 
 const ALIM_E=['🍼','📉','🌜','➕','🎯'];
+function scoreHist(){ try{ return JSON.parse(localStorage.getItem('dl_scores'))||{} }catch(e){ return {} } }
+function saveScoreSnapshot(score){
+  if(score==null) return;
+  const h=scoreHist(); h[dayKey(new Date())]=score;
+  const ks=Object.keys(h).sort(); while(ks.length>60) delete h[ks.shift()];
+  try{ localStorage.setItem('dl_scores',JSON.stringify(h)); }catch(e){}
+}
 function renderInsights(){
   const {ins,score}=buildInsights();
+  saveScoreSnapshot(score);
   const sc=$('sleepScore');
   if(score==null){ sc.textContent='–'; sc.style.borderColor='var(--muted)'; }
   else { sc.innerHTML=`${score}<small>/100</small>`;
@@ -1268,6 +1392,23 @@ function renderStats(){
   if(!document.getElementById('ch-sleep')) return;
   renderInsights();
   const {days, napH, nightH, wakes, wwByDay, feedMl, feedN, bedT, wakeT} = statsData();
+  // Estat buit: sense cap dia amb registres, els gràfics sortirien buits
+  const anyData = days.some(k=>napH[k]+nightH[k]>0 || feedN[k]>0);
+  $('statsEmpty').classList.toggle('hidden', anyData);
+  $('statsCharts').classList.toggle('hidden', !anyData);
+  // Evolució de l'índex (còpies diàries desades al dispositiu)
+  const sh=scoreHist(); const shKeys=Object.keys(sh).sort().slice(-30);
+  const hasTrend = shKeys.length>=2;
+  $('scoreTrendBox').classList.toggle('hidden', !hasTrend);
+  if(hasTrend){
+    mkChart('ch-score',{type:'line',data:{labels:shKeys.map(k=>k.slice(8)+'/'+k.slice(5,7)),
+      datasets:[{label:'Índex',data:shKeys.map(k=>sh[k]),borderColor:'#a78bfa',
+        backgroundColor:'rgba(167,139,250,.15)',tension:.3,fill:true,pointRadius:2}]},
+      options:{responsive:true,plugins:{legend:{display:false}},
+        scales:{x:{ticks:{color:'#9d9cc7'},grid:{color:'rgba(255,255,255,.05)'}},
+                y:{min:0,max:100,ticks:{color:'#9d9cc7'},grid:{color:'rgba(255,255,255,.07)'}}}}});
+  }
+  if(!anyData) return;
   const lbl = days.map(k=>k.slice(8)+'/'+k.slice(5,7));
   const totals = days.map(k=>napH[k]+nightH[k]).filter(v=>v>0);
   $('k-total').textContent = totals.length? (totals.reduce((a,b)=>a+b,0)/totals.length).toFixed(1)+' h':'–';
@@ -1314,6 +1455,19 @@ function renderStats(){
   mkChart('ch-feed',{type:'bar',data:{labels:lbl,datasets:[{label:'ml consumits',
     data:days.map(k=>feedMl[k]),backgroundColor:'#34d399'}]},options:common});
 
+  // ── bolquers ──
+  const dpAll={}, dpPee={}, dpPoo={};
+  days.forEach(k=>{dpAll[k]=0;dpPee[k]=0;dpPoo[k]=0});
+  diapers.forEach(d=>{ const k=dayKey(d.start_at); if(!(k in dpAll)) return;
+    dpAll[k]++; if(d.pee) dpPee[k]++; if(d.poo) dpPoo[k]++; });
+  const dpDays=days.filter(k=>dpAll[k]>0);
+  $('k-diap').textContent = dpDays.length? (dpDays.reduce((a,k)=>a+dpAll[k],0)/dpDays.length).toFixed(1):'–';
+  $('k-pee').textContent  = dpDays.length? (dpDays.reduce((a,k)=>a+dpPee[k],0)/dpDays.length).toFixed(1):'–';
+  mkChart('ch-diap',{type:'bar',data:{labels:lbl,datasets:[
+    {label:'💧 Pipí',data:days.map(k=>dpPee[k]),backgroundColor:'#38bdf8',stack:'d'},
+    {label:'💩 Caca',data:days.map(k=>dpPoo[k]),backgroundColor:'#c084fc',stack:'d'}]},
+    options:{...common, scales:{...common.scales, x:{...common.scales.x,stacked:true}, y:{...common.scales.y,stacked:true}}}});
+
   // ── creixement: pes vs banda de referència OMS (aprox.) ──
   const WHO_W = {   // pes-per-edat en kg, mesos 0..12, valors aproximats dels estàndards OMS 2006
     boy:{ p3:[2.5,3.4,4.4,5.1,5.6,6.1,6.4,6.7,7.0,7.2,7.5,7.7,7.8],
@@ -1356,16 +1510,30 @@ function openEditor(id){
   $('ed-loc').value = s&&s.location? s.location:(localStorage.getItem('dl_lastloc')||'');
   $('ed-start').value = s? toLocalInput(s.start_at): toLocalInput(new Date(Date.now()-3600000));
   $('ed-end').value = s&&s.end_at? toLocalInput(s.end_at): (s? '': toLocalInput(new Date()));
+  // "manual" = el tipus desat no coincideix amb el que diria l'automàtic
+  const auto = s? classifyKind(s.start_at, s.end_at) : null;
+  $('ed-kind').value = (s && s.kind!==auto) ? s.kind : 'auto';
+  edKindHint();
   $('ed-del').classList.toggle('hidden',!s);
   $('ed-msg').innerHTML='';
   $('editor').showModal();
 }
 function closeEditor(){ $('editor').close(); }
+function edKindHint(){
+  const st=$('ed-start').value, en=$('ed-end').value;
+  const h=$('ed-kind-hint'); if(!h) return;
+  if($('ed-kind').value!=='auto'){ h.textContent='Tipus fixat a mà: no es recalcularà sol.'; return; }
+  if(!st){ h.textContent=''; return; }
+  const k=classifyKind(st, en||null);
+  const bh=bedHourAt(st), hh=String(Math.floor(bh)).padStart(2,'0')+':'+String(Math.round((bh%1)*60)).padStart(2,'0');
+  h.textContent = `Detectat: ${k==='night'?'🌙 Nit':'😴 Migdiada'} (hora de llit per edat: ${hh})`;
+}
 async function saveEditor(){
   const start=$('ed-start').value, end=$('ed-end').value;
   if(!start) return show('ed-msg',"Falta l'hora d'inici",'err');
-  const h0=new Date(start).getHours(); const kind=(h0>=18||h0<6)?'night':'nap';
   if(end && new Date(end)<=new Date(start)) return show('ed-msg','El final ha de ser posterior a l\'inici','err');
+  const sel=$('ed-kind').value;
+  const kind = sel==='auto' ? classifyKind(start, end||null) : sel;
   const loc=$('ed-loc').value||null;
   if(loc) localStorage.setItem('dl_lastloc',loc);
   const payload={kind, location:loc, start_at:new Date(start).toISOString(), end_at: end? new Date(end).toISOString():null};
@@ -1477,6 +1645,6 @@ function show(id,txt,cls){ $(id).innerHTML=`<div class="msg ${cls}">${txt}</div>
 
 boot();
 </script>
-<!-- Dormilega v26 -->
+<!-- Dormilega v29 -->
 </body>
 </html>
