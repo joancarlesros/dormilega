@@ -125,6 +125,11 @@
   .sdot{font-weight:700;margin-right:2px}
   .sdot.ok{color:var(--ok)}
   .sdot.warn{color:var(--moon)}
+  .sbrow{display:grid;grid-template-columns:1fr 76px 26px;align-items:center;gap:8px;
+    font-size:.72rem;color:var(--muted);padding:4px 0}
+  .sbbar{display:block;height:5px;border-radius:3px;background:rgba(255,255,255,.09);overflow:hidden}
+  .sbbar i{display:block;height:100%;border-radius:3px;transition:width .4s}
+  .sbrow b{font-size:.72rem;text-align:right}
   .hidden{display:none!important}
   a[x-apple-data-detectors]{color:inherit!important;text-decoration:none!important;pointer-events:none}
   .msg{padding:10px 14px;border-radius:12px;font-size:.88rem;margin:10px 0}
@@ -158,24 +163,22 @@
   .inshdr.hson{color:var(--accent)} .inshdr.halim{color:var(--feed)}
   .daytotals{margin-top:10px}
   .daygrid{display:grid;grid-template-columns:repeat(3,1fr);gap:7px}
-  .daygrid .chip{background:var(--card);border-radius:14px;padding:9px 4px;text-align:center;font-weight:700;font-size:.84rem}
-  .daygrid .chip small{display:block;color:var(--muted);font-weight:500;font-size:.58rem;margin-top:2px;line-height:1.25}
-  .dexp{margin-top:6px;font-size:.62rem;color:var(--muted);text-align:center}
-  .dexp .up{color:var(--ok);font-weight:600}
-  .dexp .dn{color:var(--warn);font-weight:600}
-  .dtcmp{display:grid;grid-template-columns:repeat(3,1fr);gap:7px;margin-top:4px}
-  .dtcmp .c{text-align:center;font-size:.6rem;color:var(--muted)}
-  .dtcmp .up{color:var(--ok);font-weight:600}
-  .dtcmp .dn{color:var(--warn);font-weight:600}
-  .dtcmp .eq{color:var(--muted)}
+  .daygrid .chip{background:var(--card);border-radius:14px;padding:9px 4px;text-align:center}
+  .daygrid .chip .v{font-weight:700;font-size:.84rem;line-height:1.3}
+  .daygrid .chip .l{color:var(--muted);font-weight:500;font-size:.57rem;margin-top:1px;line-height:1.25}
+  .daygrid .chip .x{font-size:.57rem;color:var(--muted);margin-top:3px;padding-top:3px;line-height:1.25;
+    border-top:1px solid rgba(255,255,255,.07)}
+  .daygrid .up{color:var(--ok);font-weight:700}
+  .daygrid .dn{color:var(--warn);font-weight:700}
   /* capçalera de dia a l'historial */
   .daydate{font-size:1.05rem;font-weight:700;color:var(--text);margin:20px 0 2px;letter-spacing:0}
   /* avís temporal */
-  #toast{position:fixed;left:50%;bottom:calc(78px + env(safe-area-inset-bottom));transform:translate(-50%,14px);
+  #toast{position:fixed;left:50%;top:calc(10px + env(safe-area-inset-top));transform:translate(-50%,-14px);
     background:var(--card2);color:var(--text);border:1px solid rgba(255,255,255,.12);
     padding:11px 16px;border-radius:14px;font-size:.82rem;max-width:88%;text-align:center;
     box-shadow:0 10px 30px rgba(0,0,0,.45);opacity:0;pointer-events:none;transition:.28s;z-index:120}
   #toast.on{opacity:1;transform:translate(-50%,0)}
+  #toast{z-index:99}
   dialog{border:none;border-radius:20px;background:var(--card);color:var(--text);
     width:min(92vw,420px);padding:20px}
   dialog::backdrop{background:rgba(0,0,0,.6)}
@@ -273,7 +276,6 @@
 
   <h2>Avui</h2>
   <div class="daytotals" id="dayTotals"></div>
-  <div class="dtcmp" id="dayCompare"></div>
   <p class="sub" id="dayCompareNote" style="font-size:.6rem;margin:3px 0 0;text-align:center"></p>
   <p class="sub" style="margin:26px 0 10px">Cronologia d'avui</p>
   <div class="card" id="todayList"><p class="sub" style="margin:0">Encara no hi ha registres</p></div>
@@ -292,9 +294,10 @@
   <p class="sub" style="font-size:.72rem">Heurístiques calculades amb les teves dades i rangs de referència publicats (NSF, AAP, OMS). No és consell mèdic: davant de qualsevol dubte, pediatre.</p>
   <div class="card">
     <div class="row"><h2 style="margin:0">🧠 Recomanacions</h2><div class="scorebadge" id="sleepScore">–</div></div>
+    <div id="scoreBreak" class="hidden"></div>
     <div id="insightsList"></div>
     <div id="scoreTrendBox" class="hidden" style="margin-top:6px">
-      <h3 style="font-size:.8rem;color:var(--muted);margin:10px 0 6px">📈 Evolució de l'índex (30 dies)</h3>
+      <h3 style="font-size:.8rem;color:var(--muted);margin:10px 0 6px">📈 Evolució de l'índex</h3>
       <canvas id="ch-score" height="120"></canvas>
     </div>
   </div>
@@ -328,7 +331,8 @@
   <div class="chartbox"><h3>🩲 Bolquers per dia (💧 pipí · 💩 caca)</h3><canvas id="ch-diap" height="180"></canvas></div>
   <h2>⚖️ Creixement</h2>
   <div class="kpis">
-    <div class="kpi"><div class="v" id="k-weight">–</div><div class="l">⚖️ Últim pes</div></div>
+    <div class="kpi"><div class="v" id="k-weight">–</div><div class="l" id="k-weight-l">⚖️ Últim pes</div></div>
+    <div class="kpi"><div class="v" id="k-height">–</div><div class="l" id="k-height-l">📏 Última alçada</div></div>
     <div class="kpi"><div class="v" id="k-target">–</div><div class="l">🎯 Ingesta objectiu / dia</div></div>
   </div>
   <div class="chartbox"><h3>⚖️ Pes vs banda OMS P3–P97 (kg)</h3><canvas id="ch-weight" height="200"></canvas></div>
@@ -377,7 +381,7 @@
   </div>
   <div class="card">
     <h2 style="margin-top:0">📅 Totals d'avui, vigília i índex</h2>
-    <p class="sub" style="margin-bottom:0"><b>Còmput dels totals:</b> es fan per <b>finestres entre llindars</b>, no per registres sencers. Els llindars són l'<b>hora de llit per edat</b> (en la data del registre) i el <b>despertar real</b> del matí següent (el fi de l'últim tram de nit abans del migdia; 7:00 per defecte si no n'hi ha cap). Un son que travessi un llindar es reparteix entre les dues bandes. Per això les 6:00 de la classificació <b>no afecten cap total</b>: només serveixen per etiquetar un son iniciat de matinada com a continuació de la nit. <b>Nit</b> = son entre l'hora de llit d'un dia i el despertar de l'endemà (a Avui, la nit d'ahir). <b>Migdiades</b> = son entre el despertar del matí i l'hora de llit. <b>Total son</b> i <b>despert</b> a Avui són de les <b>últimes 24 h mòbils</b> (sempre una finestra completa, comparable amb els rangs per edat); a l'Historial són de despertar a despertar (~24 h). <b>Vigília:</b> a la cronologia, el temps despert entre un son i el següent es marca amb 👶. <b>Comparativa (Avui):</b> vs la mitjana dels últims 7 dies (o els disponibles), sempre <b>a la mateixa hora del dia</b>; verd = per sobre del propi valor, vermell = per sota; no es compara amb cap norma. <b>vs esperat (Historial):</b> només en dies tancats, sobre 24 h reals: son total vs rang per edat (NSF/AAP), preses 8–12/24 h en nadons de menys de ~3 mesos i ≥6 bolquers/dia. <b>Índex de son:</b> es calcula amb els últims 7 dies (mínim 3 dies amb registres); cada dia que obres l'app se'n desa una còpia al dispositiu i el gràfic "Evolució de l'índex" mostra els últims 30 dies desats. L'històric comença el dia que actives aquesta versió i es desa localment.</p>
+    <p class="sub" style="margin-bottom:0"><b>Còmput dels totals:</b> per <b>finestres entre llindars</b>, no per registres sencers. Els llindars són l'<b>hora de llit per edat</b> (en la data del registre) i el <b>despertar real</b> del matí (fi de l'últim tram de nit abans del migdia; 7:00 per defecte si no n'hi ha). Un son que travessi un llindar es reparteix entre les dues bandes. Per això les 6:00 de la classificació <b>no afecten cap total</b>: només etiqueten un son de matinada com a continuació de la nit. <b>A Avui:</b> 🌙 <b>nit</b> = la nit anterior sencera (vespre d'ahir + matinada d'avui); 😴 <b>migdiades</b> i 👶 <b>despert</b> = des del despertar d'aquest matí fins ara; 💤 <b>total son</b> = nit + migdiades (per tant, quadra). La 3a línia de cada requadre és el <b>promig del nadó</b> als últims 7 dies amb dades, <b>a aquesta mateixa hora</b>; la fletxa compara el valor d'avui amb aquest promig (verd = per sobre, vermell = per sota). No es compara amb cap norma. <b>A l'Historial</b> (dies tancats, de despertar a despertar ≈24 h), la 3a línia és <b>vs esperat</b>: son total vs rang per edat (NSF/AAP), despertars nocturns vs típics, despert = 24 h − rang de son, ml vs ~150 ml/kg/dia (amb l'últim pes registrat) o 8–12 preses si encara no hi ha pes, i ≥6 bolquers/dia. <b>El nombre de migdiades no té 3a línia</b>: no hi ha cap referència clínica sòlida de quantes migdiades "toquen", i inventar-ne una seria fals rigor. <b>Índex de son:</b> es calcula <b>per dia</b>, amb 6 puntuacions contínues de 0 a 100 (son total, nit, migdiades, despert, preses i bolquers); l'índex global és la mitjana de les que tenen dades. Cada puntuació val 100 dins del rang de referència i baixa de manera gradual segons com se n'allunyi — <b>sense esglaons</b>, de manera que es mou cada dia. Referències: 💤 son total i 👶 despert vs rang per edat (NSF/AAP); 🌙 nit segons els <b>despertars</b> (menys és millor: 0 despertars puntua 100, només es penalitza per sobre del típic per edat); 🍼 preses vs ~150 ml/kg/dia (o 8–12 preses si encara no hi ha pes); 🩲 bolquers vs ≥6/dia. 😴 <b>Migdiades no té referència clínica</b>, així que es puntua vs el <b>propi promig</b> dels 7 dies anteriors (regularitat), i només si hi ha 3 dies previs. Com que cada puntuació només depèn de les dades d'aquell dia, l'evolució de l'índex es <b>reconstrueix retroactivament</b> des dels registres i se sincronitza entre dispositius (ja no es desa cap còpia local). L'índex es mostra sobre l'<b>últim dia tancat</b>, perquè el dia en curs encara no té les hores fetes.</p>
   </div>
   <div class="card">
     <h2 style="margin-top:0">🔮 Predicció de migdiada i presa</h2>
@@ -442,7 +446,7 @@
     <option value="night">🌙 Nit</option>
   </select>
   <p class="sub" id="ed-kind-hint" style="margin:4px 0 0;font-size:.68rem"></p>
-  <label>On dorm?</label>
+  <label>On s'ha adormit?</label>
   <select id="ed-loc">
     <option value="">—</option>
     <option value="bressol">Bressol / Niu</option>
@@ -986,34 +990,14 @@ function renderHome(){
   const yk=dayKey(new Date(Date.now()-864e5));
   const today = withAwakeGaps(mergedItems().filter(it=>dayKey(it.start_at)===dayKey(new Date()))).reverse();
 
-  const nightMs = nightMsOf(yk);
-  const dayMs   = napMsOf(tk);
-  const total24 = sleepMsBetween(new Date(Date.now()-864e5), new Date());
-  const awake24 = Math.max(0, 864e5 - total24);
-  const fToday  = feedings.filter(f=>dayKey(f.start_at)===tk);
-  const mlToday = fToday.reduce((a,f)=>a+((f.amount_start!=null&&f.amount_end!=null)?Math.max(0,f.amount_start-f.amount_end):0),0);
-  const dpToday = diapers.filter(d=>dayKey(d.start_at)===tk).length;
-  $('dayTotals').innerHTML = totalsChips({total:total24, night:nightMs, wakes:nightWakesOf(yk),
-    naps:dayMs, napN:napCountOf(tk), awake:awake24, feedN:fToday.length, ml:mlToday, dp:dpToday});
-  // Comparativa vs la mitjana dels últims 7 dies, a la mateixa hora del dia
-  const midnight=new Date(); midnight.setHours(0,0,0,0);
-  const nowMs=Date.now()-midnight.getTime();
-  const prevKeys=[]; for(let i=1;i<=7;i++) prevKeys.push(dayKey(new Date(Date.now()-i*864e5)));
-  const dayOk = prevKeys.filter(k=>dayHasData(k));
-  const nightVals=[1,2,3,4,5,6,7].map(i=>{ const v=nightMsOf(dayKey(new Date(Date.now()-i*864e5))); return v>0?v:null; });
-  const total24Vals=dayOk.map(k=>sleepMsBetween(new Date(new Date(k+'T00:00').getTime()+nowMs-864e5), new Date(new Date(k+'T00:00').getTime()+nowMs)));
-  const awakeVals=total24Vals.map(v=>864e5-v);
-  const napVals=dayOk.map(k=>napsMsUpTo(k,nowMs));
-  const mlVals=dayOk.map(k=>mlUpTo(k,nowMs));
-  const feedNVals=dayOk.map(k=>feedings.filter(f=>dayKey(f.start_at)===k && new Date(f.start_at).getTime()-new Date(k+'T00:00').getTime()<=nowMs).length);
-  const dpVals=dayOk.map(k=>diapers.filter(d=>dayKey(d.start_at)===k && new Date(d.start_at).getTime()-new Date(k+'T00:00').getTime()<=nowMs).length);
-  $('dayCompare').innerHTML =
-    cmp7(total24, total24Vals,'dur')+ cmp7(nightMs, nightVals,'dur')+ cmp7(dayMs, napVals,'dur')+
-    cmp7(awake24, awakeVals,'dur')+ cmp7(fToday.length, feedNVals,'n')+ cmp7(dpToday, dpVals,'n');
-  const nDays=dayOk.length;
-  const nom=baby&&baby.name? baby.name : 'el nadó';
-  $('dayCompareNote').textContent = nDays
-    ? `vs la mitjana ${nom==='el nadó'?'del nadó':'d\'en '+nom} en ${nDays===1?'l\'últim dia':`els últims ${nDays} dies`} a les ${fmtT(lastSync||new Date())}`
+  // Nit = nit anterior sencera (vespre d'ahir + matinada d'avui)
+  // Migdiades i despert = des del despertar d'aquest matí fins ara
+  const o = dayTotalsNow(tk, Date.now()-new Date(tk+'T00:00').getTime());
+  const nightMs=o.night, dayMs=o.naps, mlToday=o.ml;
+  const avg = avgTotalsAt(Date.now()-new Date(tk+'T00:00').getTime());
+  $('dayTotals').innerHTML = todayChips(o, avg.vals);
+  $('dayCompareNote').textContent = avg.n
+    ? `valors promig ${baby&&baby.name? "d'en "+baby.name : 'del nadó'} en ${avg.n===1?"l'últim dia":`els últims ${avg.n} dies`} a aquesta hora`
     : '';
   $('todayList').innerHTML = today.length ? today.map(itemRow).join('') :
     '<p class="sub" style="margin:0">Encara no hi ha registres</p>';
@@ -1100,68 +1084,148 @@ function feedAmounts(f){
   if(qi!=null && qf!=null) return `${Math.max(0,qi-qf)}/${qi} ml`;
   return `${qi??'?'} ml`;
 }
-function napsMsUpTo(k, msOfDay){
-  const day0=new Date(k+'T00:00:00').getTime(), cut=day0+msOfDay; let ms=0;
-  sessions.filter(s=>s.kind==='nap').forEach(s=>{
-    const s0=new Date(s.start_at).getTime();
-    const s1=s.end_at? new Date(s.end_at).getTime(): Date.now();
-    const ov=Math.min(s1,cut)-Math.max(s0,day0);
-    if(ov>0) ms+=ov;
-  });
-  return ms;
-}
-function mlUpTo(k, msOfDay){
-  const day0=new Date(k+'T00:00:00').getTime(), cut=day0+msOfDay; let ml=0;
-  feedings.forEach(f=>{
-    const t=new Date(f.start_at).getTime();
-    if(t>=day0 && t<=cut && f.amount_start!=null && f.amount_end!=null) ml+=Math.max(0,f.amount_start-f.amount_end);
-  });
-  return ml;
-}
 function dayHasData(k){
   return sessions.some(s=>dayKey(s.start_at)===k) || feedings.some(f=>dayKey(f.start_at)===k);
 }
-function cmp7(today, vals, kind){
-  const v=vals.filter(x=>x!=null);
-  if(!v.length) return `<div class="c">—</div>`;
-  const base=v.reduce((a,b)=>a+b,0)/v.length;
-  if(base<=0) return `<div class="c">—</div>`;
-  const d=today-base, pct=Math.round(100*d/base);
-  const cls=d>0?'up':(d<0?'dn':'eq'), sg=d>0?'+':(d<0?'−':'');
-  const abs = kind==='ml' ? `${sg}${Math.abs(Math.round(d))} ml`
-            : kind==='n'  ? `${sg}${Math.abs(d).toFixed(Math.abs(d)<10?1:0)}`
-            : `${sg}${fmtDur(Math.abs(d))}`;
-  return `<div class="c"><span class="${cls}">${abs} · ${sg}${Math.abs(pct)}%</span></div>`;
-}
 
-/* ── Requadres de totals (2 files × 3), compartits per Avui i Historial ── */
+/* ── Requadres de totals (2 files × 3) ── */
 function plural(n,s,p){ return n===1? s : p; }
-function totalsChips(o){
+function chipBox(v,l,x){
+  return `<div class="chip"><div class="v">${v}</div><div class="l">${l}</div>${x?`<div class="x">${x}</div>`:''}</div>`;
+}
+function markRange(val,lo,hi){
+  if(val<lo) return '<span class="dn">↓</span>';
+  if(val>hi) return '<span class="dn">↑</span>';
+  return '<span class="up">✓</span>';
+}
+function markCmp(d){ return d>0?'<span class="up">↑</span>':(d<0?'<span class="dn">↓</span>':''); }
+
+/* Avui: 3a línia = promig del nadó a aquesta hora */
+function todayChips(o,a){
+  const c=(cur,avg,fmt)=> avg==null? '' : `${fmt(avg)} (${markCmp(cur-avg)})`;
+  const D=v=>fmtDur(v), N=v=>Math.round(v), M=v=>`${Math.round(v)} ml`;
   return `<div class="daygrid">
-    <div class="chip">💤 ${fmtDur(o.total)}<small>total son (24 h)</small></div>
-    <div class="chip">🌙 ${fmtDur(o.night)}<small>nit · ${o.wakes} ${plural(o.wakes,'despertar','despertars')}</small></div>
-    <div class="chip">😴 ${fmtDur(o.naps)}<small>${o.napN} ${plural(o.napN,'migdiada','migdiades')}</small></div>
-    <div class="chip">👶 ${fmtDur(o.awake)}<small>despert (24 h)</small></div>
-    <div class="chip">🍼 ${o.feedN}<small>${plural(o.feedN,'presa','preses')}${o.ml?` · ${o.ml} ml`:''}</small></div>
-    <div class="chip">🩲 ${o.dp}<small>${plural(o.dp,'canvi','canvis')}</small></div>
+    ${chipBox(`💤 ${fmtDur(o.total)}`,'total son',c(o.total,a.total,D))}
+    ${chipBox(`🌙 ${fmtDur(o.night)}`,`nit · ${o.wakes} ${plural(o.wakes,'despertar','despertars')}`,c(o.night,a.night,D))}
+    ${chipBox(`😴 ${fmtDur(o.naps)}`,`${o.napN} ${plural(o.napN,'migdiada','migdiades')}`,c(o.naps,a.naps,D))}
+    ${chipBox(`👶 ${fmtDur(o.awake)}`,'despert',c(o.awake,a.awake,D))}
+    ${chipBox(`🍼 ${o.ml} ml`,`${o.feedN} ${plural(o.feedN,'presa','preses')}`,c(o.ml,a.ml,M))}
+    ${chipBox(`🩲 ${o.dp}`,plural(o.dp,'canvi','canvis'),c(o.dp,a.dp,N))}
   </div>`;
 }
 function ageSleepRangeAt(k){
   const w=ageWeeksAt(new Date(k+'T12:00'));
   return w<14?{lo:14,hi:17}:w<48?{lo:12,hi:15}:{lo:11,hi:14};
 }
-/* línia "vs esperat" per a un dia tancat (referències per a 24 h) */
-function expectedLine(k,o){
-  const r=ageSleepRangeAt(k), h=o.total/3600000;
-  const cls=v=>v?'up':'dn';
-  const okSleep = h>=r.lo && h<=r.hi;
-  const parts=[`<span class="${cls(okSleep)}">💤 ${h.toFixed(1)} h</span> / ${r.lo}–${r.hi} h`];
+function typicalWakesAt(k){
   const w=ageWeeksAt(new Date(k+'T12:00'));
-  if(w<14 && o.feedN){ const okF=o.feedN>=8 && o.feedN<=12;
-    parts.push(`<span class="${cls(okF)}">🍼 ${o.feedN}</span> / 8–12`); }
-  if(o.dp){ const okD=o.dp>=6; parts.push(`<span class="${cls(okD)}">🩲 ${o.dp}</span> / ≥6`); }
-  return `<div class="dexp">vs esperat per edat: ${parts.join(' · ')}</div>`;
+  return w<14?[2,4]:w<26?[1,3]:w<52?[0,2]:[0,1];
 }
+function weightKgUpTo(k){
+  const ms=measures.filter(m=>m.weight_g && new Date(m.start_at)<=new Date(k+'T23:59:59'));
+  return ms.length? ms[ms.length-1].weight_g/1000 : null;
+}
+/* Historial (dia tancat): 3a línia = vs esperat */
+function dayChips(k,o){
+  const r=ageSleepRangeAt(k), h=o.total/3600000;
+  const tw=typicalWakesAt(k);
+  const aw=o.awake/3600000, awLo=24-r.hi, awHi=24-r.lo;
+  const kg=weightKgUpTo(k), mlExp=kg? Math.round(150*kg) : null;
+  const w=ageWeeksAt(new Date(k+'T12:00'));
+  return `<div class="daygrid">
+    ${chipBox(`💤 ${fmtDur(o.total)}`,'total son',`/ ${r.lo}–${r.hi} h ${markRange(h,r.lo,r.hi)}`)}
+    ${chipBox(`🌙 ${fmtDur(o.night)}`,'nit',`${o.wakes} / ${tw[0]}–${tw[1]} despertars ${markRange(o.wakes,tw[0],tw[1])}`)}
+    ${chipBox(`😴 ${fmtDur(o.naps)}`,`${o.napN} ${plural(o.napN,'migdiada','migdiades')}`,'')}
+    ${chipBox(`👶 ${fmtDur(o.awake)}`,'despert',`/ ${awLo}–${awHi} h ${markRange(aw,awLo,awHi)}`)}
+    ${chipBox(`🍼 ${o.ml} ml`,`${o.feedN} ${plural(o.feedN,'presa','preses')}`,
+       mlExp? `/ ${mlExp} ml ${markRange(o.ml,mlExp*0.85,mlExp*1.15)}`
+            : (w<14? `${o.feedN} / 8–12 ${markRange(o.feedN,8,12)}` : ''))}
+    ${chipBox(`🩲 ${o.dp}`,plural(o.dp,'canvi','canvis'),`/ ≥6 ${o.dp>=6?'<span class="up">✓</span>':'<span class="dn">↓</span>'}`)}
+  </div>`;
+}
+
+/* Totals del dia k fins a msOfDay (ms des de les 00:00). Definicions:
+   nit = la nit anterior sencera; migdiades i despert = del despertar del matí fins al tall. */
+function dayTotalsNow(k, msOfDay){
+  const day0=new Date(k+'T00:00').getTime();
+  const cut=new Date(Math.min(day0+msOfDay, Date.now()));
+  const prevK=dayKey(new Date(day0-864e5));
+  const night=nightMsOf(prevK), wakes=nightWakesOf(prevK);
+  const wk=wakeAt(k);
+  const from=new Date(Math.min(wk.getTime(), cut.getTime()));
+  const naps=sleepMsBetween(from, cut);
+  const napN=sessionsBetween(from, cut).length;
+  const awake=Math.max(0, (cut-from) - naps);
+  const f=feedings.filter(x=>dayKey(x.start_at)===k && new Date(x.start_at)<=cut);
+  const ml=f.reduce((a,x)=>a+((x.amount_start!=null&&x.amount_end!=null)?Math.max(0,x.amount_start-x.amount_end):0),0);
+  const dp=diapers.filter(x=>dayKey(x.start_at)===k && new Date(x.start_at)<=cut).length;
+  return {total:night+naps, night, wakes, naps, napN, awake, feedN:f.length, ml, dp};
+}
+/* Promig dels últims 7 dies amb dades, a la mateixa hora del dia */
+function avgTotalsAt(msOfDay){
+  const rows=[];
+  for(let i=1;i<=7;i++){
+    const k=dayKey(new Date(Date.now()-i*864e5));
+    if(dayHasData(k)) rows.push(dayTotalsNow(k, msOfDay));
+  }
+  if(!rows.length) return {n:0, vals:{}};
+  const m=f=>rows.reduce((a,r)=>a+f(r),0)/rows.length;
+  return {n:rows.length, vals:{
+    total:m(r=>r.total), night:m(r=>r.night), naps:m(r=>r.naps),
+    awake:m(r=>r.awake), ml:m(r=>r.ml), dp:m(r=>r.dp) }};
+}
+
+/* ── Puntuacions diàries per mètrica (0–100) ──
+   Contínues (sense esglaons) i calculades només amb les dades d'aquell dia,
+   de manera que es poden reconstruir retroactivament i es mouen cada dia. */
+function dayTotalsFull(k){
+  const feeds=feedings.filter(f=>dayKey(f.start_at)===k);
+  const ml=feeds.reduce((a,f)=>a+((f.amount_start!=null&&f.amount_end!=null)?Math.max(0,f.amount_start-f.amount_end):0),0);
+  const dp=diapers.filter(d=>dayKey(d.start_at)===k).length;
+  const night=nightMsOf(k), naps=napMsOf(k), total=night+naps;
+  const span=Math.max(0, wakeAt(nextKey(k))-wakeAt(k));
+  return {total, night, wakes:nightWakesOf(k), naps, napN:napCountOf(k),
+          awake:Math.max(0,span-total), feedN:feeds.length, ml, dp};
+}
+function scRange(v,lo,hi){                 // 100 dins del rang, baixa amb la distància relativa
+  if(v>=lo && v<=hi) return 100;
+  const d = v<lo ? (lo-v)/lo : (v-hi)/hi;
+  return Math.max(0, Math.round(100-d*250));
+}
+function scMin(v,min){ return v>=min?100:Math.max(0,Math.round(100*v/min)); }
+function scMax(v,max){                     // menys és millor (p. ex. despertars): només penalitza per sobre
+  if(v<=max) return 100;
+  return Math.max(0, Math.round(100-(v-max)/Math.max(1,max)*250));
+}
+function scSelf(v,base){ if(!base) return null;
+  return Math.max(0, Math.round(100-Math.abs(v-base)/base*200)); }
+function napBaseline(k){
+  const vals=[];
+  for(let i=1;i<=7;i++){ const kk=dayKey(new Date(new Date(k+'T12:00').getTime()-i*864e5));
+    if(dayHasData(kk)){ const v=napMsOf(kk); if(v>0) vals.push(v); } }
+  return vals.length>=3 ? vals.reduce((a,b)=>a+b,0)/vals.length : null;
+}
+function dayScores(k){
+  if(!dayHasData(k)) return null;
+  const o=dayTotalsFull(k);
+  const r=ageSleepRangeAt(k), tw=typicalWakesAt(k);
+  const h=o.total/3600000, aw=o.awake/3600000;
+  const kg=weightKgUpTo(k), mlExp=kg?150*kg:null;
+  const w=ageWeeksAt(new Date(k+'T12:00'));
+  const s={
+    total: o.total>0 ? scRange(h,r.lo,r.hi) : null,
+    night: o.night>0 ? scMax(o.wakes,tw[1]) : null,   // 0 despertars = perfecte
+    naps:  o.naps>0  ? scSelf(o.naps, napBaseline(k)) : null,
+    awake: o.total>0 ? scRange(aw,24-r.hi,24-r.lo) : null,
+    feeds: (mlExp && o.ml>0) ? scRange(o.ml, mlExp*0.85, mlExp*1.15)
+         : ((w<14 && o.feedN>0) ? scRange(o.feedN,8,12) : null),
+    diapers: o.dp>0 ? scMin(o.dp,6) : null
+  };
+  const vals=Object.values(s).filter(v=>v!=null);
+  return {o, s, global: vals.length? Math.round(vals.reduce((a,b)=>a+b,0)/vals.length) : null};
+}
+const SCORE_LABELS={total:'💤 Son total',night:'🌙 Nit (despertars)',naps:'😴 Migdiades',
+  awake:'👶 Despert',feeds:'🍼 Preses',diapers:'🩲 Bolquers'};
 
 function itemRow(it){
   if(it._tbl==='awake'){
@@ -1212,13 +1276,12 @@ function renderLog(){
     const nightMs=nightMsOf(k), napMs=napMsOf(k);
     const total = nightMs + napMs;
     const span = Math.max(0, wakeAt(nextKey(k)) - wakeAt(k));   // despertar → despertar (~24 h)
-    const awake = Math.max(0, span - total);
+    const awake = Math.max(0, span - napMs - 0);                 // despert del dia (fora de la nit)
     const o = {total, night:nightMs, wakes:nightWakesOf(k), naps:napMs, napN:napCountOf(k),
-               awake, feedN:feeds.length, ml, dp};
+               awake:Math.max(0, span-total), feedN:feeds.length, ml, dp};
     const rows = withAwakeGaps(its).reverse();
     return `<div class="daydate">${fmtD(k+'T12:00')}</div>
-      ${totalsChips(o)}
-      ${expectedLine(k,o)}
+      ${dayChips(k,o)}
       <div class="card" style="margin-top:8px">${rows.map(itemRow).join('')}</div>`;
   }).join('') : '<div class="card"><p class="sub" style="margin:0">Encara no hi ha res registrat</p></div>';
 }
@@ -1433,16 +1496,27 @@ function buildInsights(){
 }
 
 const ALIM_E=['🍼','📉','🌜','➕','🎯'];
-function scoreHist(){ try{ return JSON.parse(localStorage.getItem('dl_scores'))||{} }catch(e){ return {} } }
-function saveScoreSnapshot(score){
-  if(score==null) return;
-  const h=scoreHist(); h[dayKey(new Date())]=score;
-  const ks=Object.keys(h).sort(); while(ks.length>60) delete h[ks.shift()];
-  try{ localStorage.setItem('dl_scores',JSON.stringify(h)); }catch(e){}
+function lastClosedKey(){                 // últim dia tancat amb dades (normalment ahir)
+  for(let i=1;i<=14;i++){ const k=dayKey(new Date(Date.now()-i*864e5)); if(dayHasData(k)) return k; }
+  return null;
 }
 function renderInsights(){
-  const {ins,score}=buildInsights();
-  saveScoreSnapshot(score);
+  const {ins}=buildInsights();
+  const lk=lastClosedKey();
+  const ds=lk? dayScores(lk):null;
+  const score=ds? ds.global:null;
+  // desglossament per mètrica
+  const box=$('scoreBreak');
+  if(ds && score!=null){
+    box.classList.remove('hidden');
+    box.innerHTML = Object.keys(SCORE_LABELS).map(m=>{
+      const v=ds.s[m];
+      const col=v==null?'var(--muted)':(v>=80?'var(--ok)':v>=55?'var(--moon)':'var(--warn)');
+      return `<div class="sbrow"><span>${SCORE_LABELS[m]}</span>
+        <span class="sbbar"><i style="width:${v==null?0:v}%;background:${col}"></i></span>
+        <b style="color:${col}">${v==null?'–':v}</b></div>`;
+    }).join('');
+  } else box.classList.add('hidden');
   const sc=$('sleepScore');
   if(score==null){ sc.textContent='–'; sc.style.borderColor='var(--muted)'; }
   else { sc.innerHTML=`${score}<small>/100</small>`;
@@ -1457,19 +1531,23 @@ function renderInsights(){
 function renderStats(){
   if(!document.getElementById('ch-sleep')) return;
   renderInsights();
-  const {days, napH, nightH, wakes, wwByDay, feedMl, feedN, bedT, wakeT} = statsData();
-  // Estat buit: sense cap dia amb registres, els gràfics sortirien buits
-  const anyData = days.some(k=>napH[k]+nightH[k]>0 || feedN[k]>0);
+  const S = statsData();
+  const {napH, nightH, wakes, wwByDay, feedMl, feedN, bedT, wakeT} = S;
+  // Retalla l'eix al primer dia amb dades: amb 2 dies es veuen 2 columnes, no 2 de 14
+  const anyData = S.days.some(k=>napH[k]+nightH[k]>0 || feedN[k]>0 || diapers.some(d=>dayKey(d.start_at)===k));
+  const firstK = S.days.find(k=>napH[k]+nightH[k]>0 || feedN[k]>0 || diapers.some(d=>dayKey(d.start_at)===k));
+  const days = anyData ? S.days.filter(k=>k>=firstK) : S.days;
   $('statsEmpty').classList.toggle('hidden', anyData);
   $('statsCharts').classList.toggle('hidden', !anyData);
-  // Evolució de l'índex (còpies diàries desades al dispositiu)
-  const sh=scoreHist(); const shKeys=Object.keys(sh).sort().slice(-30);
-  const hasTrend = shKeys.length>=2;
+  // Evolució de l'índex: es reconstrueix de les dades crues (retroactiu, i se sincronitza sol)
+  const trendKeys=days.filter(k=>dayHasData(k) && k<dayKey(new Date()));
+  const trendVals=trendKeys.map(k=>{const d=dayScores(k);return d?d.global:null;});
+  const hasTrend=trendVals.filter(v=>v!=null).length>=2;
   $('scoreTrendBox').classList.toggle('hidden', !hasTrend);
   if(hasTrend){
-    mkChart('ch-score',{type:'line',data:{labels:shKeys.map(k=>k.slice(8)+'/'+k.slice(5,7)),
-      datasets:[{label:'Índex',data:shKeys.map(k=>sh[k]),borderColor:'#a78bfa',
-        backgroundColor:'rgba(167,139,250,.15)',tension:.3,fill:true,pointRadius:2}]},
+    mkChart('ch-score',{type:'line',data:{labels:trendKeys.map(k=>k.slice(8)+'/'+k.slice(5,7)),
+      datasets:[{label:'Índex',data:trendVals,borderColor:'#a78bfa',
+        backgroundColor:'rgba(167,139,250,.15)',tension:.3,fill:true,pointRadius:3,spanGaps:true}]},
       options:{responsive:true,plugins:{legend:{display:false}},
         scales:{x:{ticks:{color:'#9d9cc7'},grid:{color:'rgba(255,255,255,.05)'}},
                 y:{min:0,max:100,ticks:{color:'#9d9cc7'},grid:{color:'rgba(255,255,255,.07)'}}}}});
@@ -1543,25 +1621,53 @@ function renderStats(){
            p50:[3.2,4.2,5.1,5.8,6.4,6.9,7.3,7.6,7.9,8.2,8.5,8.7,8.9],
            p97:[4.2,5.4,6.5,7.4,8.1,8.7,9.2,9.6,10.0,10.4,10.7,11.0,11.3] }
   };
+  const WHO_H = {   // alçada-per-edat en cm, mesos 0..12, aproximats (OMS 2006)
+    boy:{ p3:[46.1,50.8,54.4,57.3,59.7,61.7,63.3,64.8,66.2,67.5,68.7,69.9,71.0],
+          p50:[49.9,54.7,58.4,61.4,63.9,65.9,67.6,69.2,70.6,72.0,73.3,74.5,75.7],
+          p97:[53.7,58.6,62.4,65.5,68.0,70.1,71.9,73.5,75.0,76.5,77.9,79.2,80.5] },
+    girl:{ p3:[45.4,49.8,53.0,55.6,57.8,59.6,61.2,62.7,64.0,65.3,66.5,67.7,68.9],
+           p50:[49.1,53.7,57.1,59.8,62.1,64.0,65.7,67.3,68.7,70.1,71.5,72.8,74.0],
+           p97:[52.9,57.6,61.1,64.0,66.4,68.5,70.3,71.9,73.5,75.0,76.4,77.8,79.2] }
+  };
+  const interp=(arr,m)=>{ const i=Math.max(0,Math.min(11,Math.floor(m))), f=Math.min(1,Math.max(0,m-i));
+    return arr[i]+(arr[Math.min(12,i+1)]-arr[i])*f; };
+  function band(v,tab,m){
+    const p3=interp(tab.p3,m), p50=interp(tab.p50,m), p97=interp(tab.p97,m);
+    if(v<p3) return '<span style="color:var(--warn)">sota P3</span>';
+    if(v<p50) return 'entre P3 i P50';
+    if(v<=p97) return 'entre P50 i P97';
+    return '<span style="color:var(--warn)">sobre P97</span>';
+  }
   const wm = measures.filter(m=>m.weight_g);
   const lastW = wm.length? wm[wm.length-1] : null;
   $('k-weight').textContent = lastW? (lastW.weight_g/1000).toFixed(2).replace('.',',')+' kg' : '–';
   $('k-target').textContent = lastW? Math.round(lastW.weight_g/1000*150)+' ml' : '–';
   const birth = new Date(baby.birthdate+'T00:00');
+  const sexKey = baby.sex==='girl'?'girl':'boy';
+  if(lastW){ const m=(new Date(lastW.start_at)-birth)/(30.44*864e5);
+    $('k-weight-l').innerHTML = '⚖️ Últim pes · '+band(lastW.weight_g/1000, WHO_W[sexKey], m); }
+  const hm = measures.filter(m=>m.height_cm);
+  const lastH = hm.length? hm[hm.length-1]:null;
+  $('k-height').textContent = lastH? String(lastH.height_cm).replace('.',',')+' cm' : '–';
+  if(lastH){ const m=(new Date(lastH.start_at)-birth)/(30.44*864e5);
+    $('k-height-l').innerHTML = '📏 Última alçada · '+band(lastH.height_cm, WHO_H[sexKey], m); }
   const pts = wm.map(m=>({x:+(((new Date(m.start_at)-birth)/(30.44*864e5)).toFixed(2)), y:+(m.weight_g/1000).toFixed(2)}));
   const ref = WHO_W[baby.sex==='girl'?'girl':'boy'];
   const months=[...Array(13).keys()];
   const refLine=(arr,col,fill)=>({label:'', data:months.map(m=>({x:m,y:arr[m]})), borderColor:col,
     backgroundColor:fill||'transparent', pointRadius:0, borderWidth:1, fill:fill?'-1':false, tension:.3});
+  // amb poques dades, apropa l'eix a l'edat actual perquè el punt es vegi
+  const ageM = (new Date()-birth)/(30.44*864e5);
+  const xMax = Math.max(2, Math.ceil(Math.max(ageM, pts.length?pts[pts.length-1].x:0)+1));
   mkChart('ch-weight',{type:'line',data:{datasets:[
     {...refLine(ref.p3,'rgba(157,156,199,.5)'), label:'P3'},
     {...refLine(ref.p97,'rgba(157,156,199,.5)','rgba(157,156,199,.08)'), label:'P97'},
     {...refLine(ref.p50,'rgba(157,156,199,.9)'), label:'P50'},
     {label:baby.name, data:pts, borderColor:'#fcd34d', backgroundColor:'#fcd34d',
-     pointRadius:4, borderWidth:2, tension:.2}]},
+     pointRadius:6, pointHoverRadius:8, borderWidth:2, tension:.2, showLine:pts.length>1}]},
     options:{responsive:true, plugins:{legend:{labels:{color:'#9d9cc7',boxWidth:12,
       filter:i=>['P50',baby.name].includes(i.text)}}},
-      scales:{x:{type:'linear',min:0,max:12,ticks:{color:'#9d9cc7',stepSize:1,callback:v=>v+' m'},grid:{color:'rgba(255,255,255,.05)'}},
+      scales:{x:{type:'linear',min:0,max:xMax,ticks:{color:'#9d9cc7',stepSize:xMax<=3?0.5:1,callback:v=>v+' m'},grid:{color:'rgba(255,255,255,.05)'}},
               y:{ticks:{color:'#9d9cc7'},grid:{color:'rgba(255,255,255,.07)'}}}}});
 }
 function mkChart(id,cfg){ if(charts[id]) charts[id].destroy(); charts[id]=new Chart($(id).getContext('2d'),cfg); }
@@ -1711,6 +1817,6 @@ function show(id,txt,cls){ $(id).innerHTML=`<div class="msg ${cls}">${txt}</div>
 
 boot();
 </script>
-<!-- Dormilega v31 -->
+<!-- Dormilega v33 -->
 </body>
 </html>
