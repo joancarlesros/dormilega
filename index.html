@@ -122,6 +122,9 @@
   .sheetgrid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
   .sheetgrid button{padding:18px 10px;font-size:1rem}
   .badge.measure{background:rgba(125,211,252,.16);color:#7dd3fc}
+  .sdot{font-weight:700;margin-right:2px}
+  .sdot.ok{color:var(--ok)}
+  .sdot.warn{color:var(--moon)}
   .hidden{display:none!important}
   a[x-apple-data-detectors]{color:inherit!important;text-decoration:none!important;pointer-events:none}
   .msg{padding:10px 14px;border-radius:12px;font-size:.88rem;margin:10px 0}
@@ -153,17 +156,20 @@
   .inssum .l{font-size:.62rem;color:var(--muted);margin-top:2px}
   .inshdr{margin:16px 0 2px;font-size:.78rem;font-weight:700;text-transform:uppercase;letter-spacing:.06em}
   .inshdr.hson{color:var(--accent)} .inshdr.halim{color:var(--feed)}
-  .daytotals{display:flex;gap:8px;margin-top:10px}
-  .daytotals .chip{flex:1;background:var(--card);border-radius:14px;padding:9px 6px;text-align:center;font-weight:700;font-size:.92rem}
-  .daytotals .chip small{display:block;color:var(--muted);font-weight:500;font-size:.64rem;margin-top:2px}
-  .dtcmp{display:flex;gap:8px;margin-top:5px}
-  .dtcmp .c{flex:1;text-align:center;font-size:.64rem;color:var(--muted)}
+  .daytotals{margin-top:10px}
+  .daygrid{display:grid;grid-template-columns:repeat(3,1fr);gap:7px}
+  .daygrid .chip{background:var(--card);border-radius:14px;padding:9px 4px;text-align:center;font-weight:700;font-size:.84rem}
+  .daygrid .chip small{display:block;color:var(--muted);font-weight:500;font-size:.58rem;margin-top:2px;line-height:1.25}
+  .dexp{margin-top:6px;font-size:.62rem;color:var(--muted);text-align:center}
+  .dexp .up{color:var(--ok);font-weight:600}
+  .dexp .dn{color:var(--warn);font-weight:600}
+  .dtcmp{display:grid;grid-template-columns:repeat(3,1fr);gap:7px;margin-top:4px}
+  .dtcmp .c{text-align:center;font-size:.6rem;color:var(--muted)}
   .dtcmp .up{color:var(--ok);font-weight:600}
   .dtcmp .dn{color:var(--warn);font-weight:600}
   .dtcmp .eq{color:var(--muted)}
   /* capçalera de dia a l'historial */
   .daydate{font-size:1.05rem;font-weight:700;color:var(--text);margin:20px 0 2px;letter-spacing:0}
-  .daysum{color:var(--muted);font-size:.72rem;margin-bottom:8px}
   /* avís temporal */
   #toast{position:fixed;left:50%;bottom:calc(78px + env(safe-area-inset-bottom));transform:translate(-50%,14px);
     background:var(--card2);color:var(--text);border:1px solid rgba(255,255,255,.12);
@@ -235,7 +241,7 @@
 
 <!-- ══════ AVUI ══════ -->
 <section id="scr-home" class="screen">
-  <div class="row" style="align-items:flex-end">
+  <div class="row" style="align-items:flex-end;margin-bottom:16px">
     <div><h1 id="home-title">Hola</h1>
       <p class="sub" id="home-age" style="margin:0"></p>
     </div>
@@ -371,7 +377,7 @@
   </div>
   <div class="card">
     <h2 style="margin-top:0">📅 Totals d'avui, vigília i índex</h2>
-    <p class="sub" style="margin-bottom:0"><b>Nit anterior</b> = son entre 1 h abans de l'hora de llit d'ahir i el despertar d'aquest matí (fi de l'últim tram de nit abans del migdia; si encara dorm, fins ara). <b>Migdiades</b> i <b>presos</b> són el total del dia en curs. Sota cada total, la comparació amb la teva <b>mitjana dels últims 7 dies</b> (o dels dies disponibles), sempre <b>a la mateixa hora del dia</b> perquè sigui justa: es compara el que sols portar acumulat a aquesta hora, no un dia sencer. Verd = per sobre del teu propi valor; vermell = per sota. No es compara amb cap norma: això ho fan les Recomanacions. <b>Vigília:</b> a la cronologia i a l'historial, el temps despert entre un son i el següent es marca amb 👶. <b>Índex de son:</b> es calcula amb els últims 7 dies (cal un mínim de 3 dies amb registres), de manera que canvia poc a poc; cada dia que obres l'app se'n desa una còpia al dispositiu i el gràfic "Evolució de l'índex" mostra els últims 30 dies desats. L'històric comença el dia que actives aquesta versió i es desa localment (no se sincronitza entre dispositius, però com que surt de les mateixes dades sincronitzades, cada dispositiu calcula el mateix valor).</p>
+    <p class="sub" style="margin-bottom:0"><b>Còmput dels totals:</b> es fan per <b>finestres entre llindars</b>, no per registres sencers. Els llindars són l'<b>hora de llit per edat</b> (en la data del registre) i el <b>despertar real</b> del matí següent (el fi de l'últim tram de nit abans del migdia; 7:00 per defecte si no n'hi ha cap). Un son que travessi un llindar es reparteix entre les dues bandes. Per això les 6:00 de la classificació <b>no afecten cap total</b>: només serveixen per etiquetar un son iniciat de matinada com a continuació de la nit. <b>Nit</b> = son entre l'hora de llit d'un dia i el despertar de l'endemà (a Avui, la nit d'ahir). <b>Migdiades</b> = son entre el despertar del matí i l'hora de llit. <b>Total son</b> i <b>despert</b> a Avui són de les <b>últimes 24 h mòbils</b> (sempre una finestra completa, comparable amb els rangs per edat); a l'Historial són de despertar a despertar (~24 h). <b>Vigília:</b> a la cronologia, el temps despert entre un son i el següent es marca amb 👶. <b>Comparativa (Avui):</b> vs la mitjana dels últims 7 dies (o els disponibles), sempre <b>a la mateixa hora del dia</b>; verd = per sobre del propi valor, vermell = per sota; no es compara amb cap norma. <b>vs esperat (Historial):</b> només en dies tancats, sobre 24 h reals: son total vs rang per edat (NSF/AAP), preses 8–12/24 h en nadons de menys de ~3 mesos i ≥6 bolquers/dia. <b>Índex de son:</b> es calcula amb els últims 7 dies (mínim 3 dies amb registres); cada dia que obres l'app se'n desa una còpia al dispositiu i el gràfic "Evolució de l'índex" mostra els últims 30 dies desats. L'històric comença el dia que actives aquesta versió i es desa localment.</p>
   </div>
   <div class="card">
     <h2 style="margin-top:0">🔮 Predicció de migdiada i presa</h2>
@@ -680,8 +686,8 @@ async function flushQueue(){
 }
 function updateSyncDot(){
   const n=getQueue().length;
-  $('syncdot').innerHTML = n ? `⏳ ${n} per sincronitzar`
-    : (lastSync ? `✅ Última actualització: ${fmtT(lastSync)}` : '—');
+  $('syncdot').innerHTML = n ? `<span class="sdot warn">◌</span> ${n} per sincronitzar`
+    : (lastSync ? `<span class="sdot ok">✓</span> Última actualització: ${fmtT(lastSync)}` : '—');
 }
 
 function subscribeRealtime(){
@@ -734,7 +740,7 @@ async function reclassifyHistory(){
   localStorage.setItem('dl_reclass_bedtime','1');
   if(fixes.length){
     const n=fixes.length;
-    setTimeout(()=>toast(`✅ ${n} ${n===1?'registre reclassificat':'registres reclassificats'} amb la nova regla de nit`),400);
+    setTimeout(()=>toast(`✓ ${n} ${n===1?'registre reclassificat':'registres reclassificats'} amb la nova regla de nit`),400);
   }
   return fixes.length;
 }
@@ -911,7 +917,7 @@ async function doRefresh(){
   const rest=minShow-(Date.now()-t0);
   if(rest>0) await new Promise(r=>setTimeout(r,rest));
   $('ptr').classList.remove('on');
-  toast('✅ Actualitzat');
+  toast('✓ Actualitzat');
   updateSyncDot(); refreshing=false;
 }
 // estira cap avall (amb la pàgina a dalt de tot) per refrescar — funciona a totes les pantalles
@@ -977,29 +983,37 @@ function renderHome(){
   tick();
 
   const tk=dayKey(new Date());
+  const yk=dayKey(new Date(Date.now()-864e5));
   const today = withAwakeGaps(mergedItems().filter(it=>dayKey(it.start_at)===dayKey(new Date()))).reverse();
 
-  // Nit anterior: des de les 18:00 d'ahir fins al despertar del matí d'avui
-  const nightMs = nightSleepMs(new Date());
-  let dayMs=0; sessions.filter(s=>s.kind==='nap'&&dayKey(s.start_at)===tk)
-    .forEach(s=>{ dayMs += (s.end_at? new Date(s.end_at): new Date()) - new Date(s.start_at); });
-  const mlToday = feedings.filter(f=>dayKey(f.start_at)===tk)
-    .reduce((a,f)=>a+((f.amount_start!=null&&f.amount_end!=null)?Math.max(0,f.amount_start-f.amount_end):0),0);
-  $('dayTotals').innerHTML =
-    `<div class="chip">🌙 ${fmtDur(nightMs)}<small>nit anterior</small></div>`+
-    `<div class="chip">😴 ${fmtDur(dayMs)}<small>migdiades</small></div>`+
-    `<div class="chip">🍼 ${mlToday} ml<small>presos</small></div>`;
-  // Comparativa vs la teva mitjana dels últims 7 dies, a la mateixa hora del dia
+  const nightMs = nightMsOf(yk);
+  const dayMs   = napMsOf(tk);
+  const total24 = sleepMsBetween(new Date(Date.now()-864e5), new Date());
+  const awake24 = Math.max(0, 864e5 - total24);
+  const fToday  = feedings.filter(f=>dayKey(f.start_at)===tk);
+  const mlToday = fToday.reduce((a,f)=>a+((f.amount_start!=null&&f.amount_end!=null)?Math.max(0,f.amount_start-f.amount_end):0),0);
+  const dpToday = diapers.filter(d=>dayKey(d.start_at)===tk).length;
+  $('dayTotals').innerHTML = totalsChips({total:total24, night:nightMs, wakes:nightWakesOf(yk),
+    naps:dayMs, napN:napCountOf(tk), awake:awake24, feedN:fToday.length, ml:mlToday, dp:dpToday});
+  // Comparativa vs la mitjana dels últims 7 dies, a la mateixa hora del dia
   const midnight=new Date(); midnight.setHours(0,0,0,0);
   const nowMs=Date.now()-midnight.getTime();
   const prevKeys=[]; for(let i=1;i<=7;i++) prevKeys.push(dayKey(new Date(Date.now()-i*864e5)));
-  const nightVals=[1,2,3,4,5,6,7].map(i=>{ const v=nightSleepMs(new Date(Date.now()-i*864e5)); return v>0?v:null; });
-  const napVals=prevKeys.map(k=> dayHasData(k)? napsMsUpTo(k,nowMs): null);
-  const mlVals=prevKeys.map(k=> dayHasData(k)? mlUpTo(k,nowMs): null);
-  $('dayCompare').innerHTML = cmp7(nightMs,nightVals,'dur')+cmp7(dayMs,napVals,'dur')+cmp7(mlToday,mlVals,'ml');
-  const nDays=Math.max(nightVals.filter(x=>x!=null).length, napVals.filter(x=>x!=null).length, mlVals.filter(x=>x!=null).length);
+  const dayOk = prevKeys.filter(k=>dayHasData(k));
+  const nightVals=[1,2,3,4,5,6,7].map(i=>{ const v=nightMsOf(dayKey(new Date(Date.now()-i*864e5))); return v>0?v:null; });
+  const total24Vals=dayOk.map(k=>sleepMsBetween(new Date(new Date(k+'T00:00').getTime()+nowMs-864e5), new Date(new Date(k+'T00:00').getTime()+nowMs)));
+  const awakeVals=total24Vals.map(v=>864e5-v);
+  const napVals=dayOk.map(k=>napsMsUpTo(k,nowMs));
+  const mlVals=dayOk.map(k=>mlUpTo(k,nowMs));
+  const feedNVals=dayOk.map(k=>feedings.filter(f=>dayKey(f.start_at)===k && new Date(f.start_at).getTime()-new Date(k+'T00:00').getTime()<=nowMs).length);
+  const dpVals=dayOk.map(k=>diapers.filter(d=>dayKey(d.start_at)===k && new Date(d.start_at).getTime()-new Date(k+'T00:00').getTime()<=nowMs).length);
+  $('dayCompare').innerHTML =
+    cmp7(total24, total24Vals,'dur')+ cmp7(nightMs, nightVals,'dur')+ cmp7(dayMs, napVals,'dur')+
+    cmp7(awake24, awakeVals,'dur')+ cmp7(fToday.length, feedNVals,'n')+ cmp7(dpToday, dpVals,'n');
+  const nDays=dayOk.length;
+  const nom=baby&&baby.name? baby.name : 'el nadó';
   $('dayCompareNote').textContent = nDays
-    ? `comparat amb la teva mitjana ${nDays===1?"d'1 dia":`de ${nDays} dies`}, a aquesta mateixa hora`
+    ? `vs la mitjana ${nom==='el nadó'?'del nadó':'d\'en '+nom} en ${nDays===1?'l\'últim dia':`els últims ${nDays} dies`} a les ${fmtT(lastSync||new Date())}`
     : '';
   $('todayList').innerHTML = today.length ? today.map(itemRow).join('') :
     '<p class="sub" style="margin:0">Encara no hi ha registres</p>';
@@ -1027,21 +1041,50 @@ function withAwakeGaps(itemsAsc){
 }
 
 /* ── Totals d'avui i comparatives ── */
-/* ── Nit: una sola definició per a tota l'app ──
-   Un tram de nit pertany a la "nit del dia D" si comença el vespre de D
-   o de matinada de D+1 (abans de les 12:00). Així un despertar a les 2:00
-   no compta com a nit del dia següent. */
-function nightOfKey(startLike){
-  const d=new Date(startLike), nd=new Date(d);
-  if(d.getHours()<12) nd.setDate(nd.getDate()-1);
-  return dayKey(nd);
+/* ── Còmput de totals: per finestres entre llindars ──
+   Els límits són l'hora de llit (per edat, en aquella data) i el despertar REAL
+   del matí següent. Un son que travessi un llindar es reparteix entre les dues
+   bandes (no s'atribueix sencer a cap). Així el 6:00 no afecta cap total:
+   només s'usa per etiquetar un son de matinada com a continuació de la nit. */
+function bedAt(k){
+  const bh=bedHourAt(new Date(k+'T12:00')), b=new Date(k+'T00:00');
+  b.setHours(Math.floor(bh), Math.round((bh%1)*60), 0, 0);
+  return b;
 }
-function nightSessionsOf(k){ return sessions.filter(s=>s.kind==='night' && nightOfKey(s.start_at)===k); }
-function nightMsOf(k){
-  return nightSessionsOf(k).reduce((a,s)=>
-    a + ((s.end_at? new Date(s.end_at) : new Date()) - new Date(s.start_at)), 0);
+function wakeAt(k){                       // despertar del matí del dia k
+  const dawn=new Date(k+'T00:00'), noon=new Date(k+'T12:00'), now=new Date();
+  const og=ongoing();
+  if(og && og.kind==='night' && dayKey(now)===k && now<noon && new Date(og.start_at)<now) return now;
+  let end=null;
+  sessions.filter(s=>s.kind==='night'&&s.end_at).forEach(s=>{
+    const e=new Date(s.end_at);
+    if(e>=dawn && e<=noon && (!end||e>end)) end=e;
+  });
+  return end || new Date(k+'T07:00');      // si no hi ha registre, 7:00 per defecte
 }
-function nightWakesOf(k){ return Math.max(0, nightSessionsOf(k).length - 1); }
+function nextKey(k){ return dayKey(new Date(new Date(k+'T12:00').getTime()+864e5)); }
+function sleepMsBetween(a,b){
+  const at=a.getTime(), bt=b.getTime(); let ms=0;
+  sessions.forEach(s=>{
+    const s0=new Date(s.start_at).getTime();
+    const s1=(s.end_at? new Date(s.end_at): new Date()).getTime();
+    const ov=Math.min(s1,bt)-Math.max(s0,at);
+    if(ov>0) ms+=ov;
+  });
+  return ms;
+}
+function sessionsBetween(a,b){
+  const at=a.getTime(), bt=b.getTime();
+  return sessions.filter(s=>{
+    const s0=new Date(s.start_at).getTime();
+    const s1=(s.end_at? new Date(s.end_at): new Date()).getTime();
+    return Math.min(s1,bt)-Math.max(s0,at) > 0;
+  });
+}
+function nightMsOf(k){ return sleepMsBetween(bedAt(k), wakeAt(nextKey(k))); }
+function nightWakesOf(k){ return Math.max(0, sessionsBetween(bedAt(k), wakeAt(nextKey(k))).length - 1); }
+function napMsOf(k){ return sleepMsBetween(wakeAt(k), bedAt(k)); }
+function napCountOf(k){ return sessionsBetween(wakeAt(k), bedAt(k)).length; }
 function nightSleepMs(refDate){
   const y=new Date(refDate); y.setDate(y.getDate()-1);
   return nightMsOf(dayKey(y));
@@ -1085,8 +1128,39 @@ function cmp7(today, vals, kind){
   if(base<=0) return `<div class="c">—</div>`;
   const d=today-base, pct=Math.round(100*d/base);
   const cls=d>0?'up':(d<0?'dn':'eq'), sg=d>0?'+':(d<0?'−':'');
-  const abs=kind==='ml'? `${sg}${Math.abs(Math.round(d))} ml` : `${sg}${fmtDur(Math.abs(d))}`;
+  const abs = kind==='ml' ? `${sg}${Math.abs(Math.round(d))} ml`
+            : kind==='n'  ? `${sg}${Math.abs(d).toFixed(Math.abs(d)<10?1:0)}`
+            : `${sg}${fmtDur(Math.abs(d))}`;
   return `<div class="c"><span class="${cls}">${abs} · ${sg}${Math.abs(pct)}%</span></div>`;
+}
+
+/* ── Requadres de totals (2 files × 3), compartits per Avui i Historial ── */
+function plural(n,s,p){ return n===1? s : p; }
+function totalsChips(o){
+  return `<div class="daygrid">
+    <div class="chip">💤 ${fmtDur(o.total)}<small>total son (24 h)</small></div>
+    <div class="chip">🌙 ${fmtDur(o.night)}<small>nit · ${o.wakes} ${plural(o.wakes,'despertar','despertars')}</small></div>
+    <div class="chip">😴 ${fmtDur(o.naps)}<small>${o.napN} ${plural(o.napN,'migdiada','migdiades')}</small></div>
+    <div class="chip">👶 ${fmtDur(o.awake)}<small>despert (24 h)</small></div>
+    <div class="chip">🍼 ${o.feedN}<small>${plural(o.feedN,'presa','preses')}${o.ml?` · ${o.ml} ml`:''}</small></div>
+    <div class="chip">🩲 ${o.dp}<small>${plural(o.dp,'canvi','canvis')}</small></div>
+  </div>`;
+}
+function ageSleepRangeAt(k){
+  const w=ageWeeksAt(new Date(k+'T12:00'));
+  return w<14?{lo:14,hi:17}:w<48?{lo:12,hi:15}:{lo:11,hi:14};
+}
+/* línia "vs esperat" per a un dia tancat (referències per a 24 h) */
+function expectedLine(k,o){
+  const r=ageSleepRangeAt(k), h=o.total/3600000;
+  const cls=v=>v?'up':'dn';
+  const okSleep = h>=r.lo && h<=r.hi;
+  const parts=[`<span class="${cls(okSleep)}">💤 ${h.toFixed(1)} h</span> / ${r.lo}–${r.hi} h`];
+  const w=ageWeeksAt(new Date(k+'T12:00'));
+  if(w<14 && o.feedN){ const okF=o.feedN>=8 && o.feedN<=12;
+    parts.push(`<span class="${cls(okF)}">🍼 ${o.feedN}</span> / 8–12`); }
+  if(o.dp){ const okD=o.dp>=6; parts.push(`<span class="${cls(okD)}">🩲 ${o.dp}</span> / ≥6`); }
+  return `<div class="dexp">vs esperat per edat: ${parts.join(' · ')}</div>`;
 }
 
 function itemRow(it){
@@ -1132,25 +1206,20 @@ function renderLog(){
   const keys = Object.keys(byDay).sort().reverse();                             // dies recents primer
   $('logList').innerHTML = keys.length ? keys.map(k=>{
     const its = byDay[k];
-    const sl = its.filter(s=>s._tbl==='sleep_sessions'&&s.end_at);
-    const dur=s=>new Date(s.end_at)-new Date(s.start_at);
-    const nightMs = nightMsOf(k);                 // nit de k → k+1 (mateixa definició que a Avui)
-    const nightWk = nightWakesOf(k);
-    const naps    = sl.filter(s=>s.kind==='nap');
-    const napMs   = naps.reduce((a,s)=>a+dur(s),0);
-    const napN    = naps.length;
     const feeds   = its.filter(s=>s._tbl==='feedings');
     const ml = feeds.reduce((a,f)=>a+((f.amount_start!=null&&f.amount_end!=null)?Math.max(0,f.amount_start-f.amount_end):0),0);
     const dp = its.filter(s=>s._tbl==='diapers').length;
-    const parts=[];
-    if(nightMs) parts.push(`🌙 ${fmtDur(nightMs)}`);
-    if(napMs||napN) parts.push(`😴 ${fmtDur(napMs)} (${napN})`);
-    if(feeds.length) parts.push(`🍼 ${feeds.length}${ml?` · ${ml} ml`:''}`);
-    if(dp) parts.push(`🩲 ${dp}`);
+    const nightMs=nightMsOf(k), napMs=napMsOf(k);
+    const total = nightMs + napMs;
+    const span = Math.max(0, wakeAt(nextKey(k)) - wakeAt(k));   // despertar → despertar (~24 h)
+    const awake = Math.max(0, span - total);
+    const o = {total, night:nightMs, wakes:nightWakesOf(k), naps:napMs, napN:napCountOf(k),
+               awake, feedN:feeds.length, ml, dp};
     const rows = withAwakeGaps(its).reverse();
     return `<div class="daydate">${fmtD(k+'T12:00')}</div>
-      <div class="daysum">${parts.join(' · ')||'sense registres'}</div>
-      <div class="card">${rows.map(itemRow).join('')}</div>`;
+      ${totalsChips(o)}
+      ${expectedLine(k,o)}
+      <div class="card" style="margin-top:8px">${rows.map(itemRow).join('')}</div>`;
   }).join('') : '<div class="card"><p class="sub" style="margin:0">Encara no hi ha res registrat</p></div>';
 }
 
@@ -1642,6 +1711,6 @@ function show(id,txt,cls){ $(id).innerHTML=`<div class="msg ${cls}">${txt}</div>
 
 boot();
 </script>
-<!-- Dormilega v30 -->
+<!-- Dormilega v31 -->
 </body>
 </html>
