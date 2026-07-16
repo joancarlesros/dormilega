@@ -66,7 +66,7 @@
     0%{box-shadow:0 4px 14px rgba(0,0,0,.4), 0 0 0 0 rgba(167,139,250,.5)}
     100%{box-shadow:0 4px 14px rgba(0,0,0,.4), 0 0 0 16px rgba(167,139,250,0)}}
   @media (prefers-reduced-motion:reduce){ #ptr.on{animation:none;display:flex} }
-  .statuscircle{position:relative;width:170px;height:170px;border-radius:50%;margin:14px auto;display:flex;
+  .statuscircle{position:relative;width:170px;height:170px;border-radius:50%;margin:30px auto;display:flex;
     flex-direction:column;align-items:center;justify-content:center;gap:4px;
     background:radial-gradient(circle at 35% 30%, var(--card2), var(--bg2));
     border:3px solid #fcd34d;text-align:center;
@@ -314,12 +314,12 @@
     <div class="kpi"><div class="v" id="k-ml">–</div><div class="l">🥛 ml / dia</div></div>
   </div>
   <div class="chartbox"><h3>🍼 ml per dia</h3><canvas id="ch-feed" height="180"></canvas></div>
-  <h2>🚼 Bolquers</h2>
+  <h2>🩲 Bolquers</h2>
   <div class="kpis">
-    <div class="kpi"><div class="v" id="k-diap">–</div><div class="l">🚼 Canvis / dia</div></div>
+    <div class="kpi"><div class="v" id="k-diap">–</div><div class="l">🩲 Canvis / dia</div></div>
     <div class="kpi"><div class="v" id="k-pee">–</div><div class="l">💧 Molls / dia</div></div>
   </div>
-  <div class="chartbox"><h3>🚼 Bolquers per dia (💧 pipí · 💩 caca)</h3><canvas id="ch-diap" height="180"></canvas></div>
+  <div class="chartbox"><h3>🩲 Bolquers per dia (💧 pipí · 💩 caca)</h3><canvas id="ch-diap" height="180"></canvas></div>
   <h2>⚖️ Creixement</h2>
   <div class="kpis">
     <div class="kpi"><div class="v" id="k-weight">–</div><div class="l">⚖️ Últim pes</div></div>
@@ -942,7 +942,7 @@ function renderHome(){
   const og = ongoing();
   const c = $('statusCircle');
   c.classList.toggle('sleeping', !!og);
-  $('st-emoji').textContent = og ? '😴' : '👶';
+  $('st-emoji').textContent = og ? (og.kind==='night' ? '🌙' : '😴') : '👶';
   $('st-label').textContent = og ? (og.kind==='night'?'dormint (nit)':'fent la migdiada') : 'despert';
   const btn=$('mainBtn');
   btn.textContent = og ? "👶 S'ha despertat" : '😴 Comença a dormir';
@@ -1027,29 +1027,24 @@ function withAwakeGaps(itemsAsc){
 }
 
 /* ── Totals d'avui i comparatives ── */
+/* ── Nit: una sola definició per a tota l'app ──
+   Un tram de nit pertany a la "nit del dia D" si comença el vespre de D
+   o de matinada de D+1 (abans de les 12:00). Així un despertar a les 2:00
+   no compta com a nit del dia següent. */
+function nightOfKey(startLike){
+  const d=new Date(startLike), nd=new Date(d);
+  if(d.getHours()<12) nd.setDate(nd.getDate()-1);
+  return dayKey(nd);
+}
+function nightSessionsOf(k){ return sessions.filter(s=>s.kind==='night' && nightOfKey(s.start_at)===k); }
+function nightMsOf(k){
+  return nightSessionsOf(k).reduce((a,s)=>
+    a + ((s.end_at? new Date(s.end_at) : new Date()) - new Date(s.start_at)), 0);
+}
+function nightWakesOf(k){ return Math.max(0, nightSessionsOf(k).length - 1); }
 function nightSleepMs(refDate){
-  const noon=new Date(refDate); noon.setHours(12,0,0,0);
-  const yest=new Date(noon); yest.setDate(yest.getDate()-1);
-  const bhY=bedHourAt(yest);
-  const start=new Date(yest);
-  start.setHours(Math.floor(bhY-1), Math.round(((bhY-1)%1)*60), 0, 0);  // 1 h abans del llit d'ahir
-  const isToday = dayKey(refDate)===dayKey(new Date());
-  let end=null;
-  sessions.filter(s=>s.kind==='night'&&s.end_at).forEach(s=>{
-    const e=new Date(s.end_at);
-    if(e>start && e<=noon && (!end||e>end)) end=e;
-  });
-  const og=ongoing();
-  if(isToday && og && og.kind==='night' && new Date(og.start_at)<noon) end=new Date();
-  if(!end) end=noon;
-  let ms=0;
-  sessions.forEach(s=>{
-    const s0=new Date(s.start_at).getTime();
-    const s1=(s.end_at? new Date(s.end_at): (isToday? new Date(): new Date(s.start_at))).getTime();
-    const ov=Math.min(s1,end.getTime())-Math.max(s0,start.getTime());
-    if(ov>0) ms+=ov;
-  });
-  return ms;
+  const y=new Date(refDate); y.setDate(y.getDate()-1);
+  return nightMsOf(dayKey(y));
 }
 const LOC={bressol:'🛏️',cotxet:'🛒',cotxe:'🚗',hamaca:'🪑',bracos:'🤱',motxilla:'🎒',llit_pares:'👨‍👩‍👦',altres:'📍'};
 function fracDonut(p){
@@ -1139,9 +1134,11 @@ function renderLog(){
     const its = byDay[k];
     const sl = its.filter(s=>s._tbl==='sleep_sessions'&&s.end_at);
     const dur=s=>new Date(s.end_at)-new Date(s.start_at);
-    const nightMs = sl.filter(s=>s.kind==='night').reduce((a,s)=>a+dur(s),0);
-    const napMs   = sl.filter(s=>s.kind==='nap').reduce((a,s)=>a+dur(s),0);
-    const napN    = sl.filter(s=>s.kind==='nap').length;
+    const nightMs = nightMsOf(k);                 // nit de k → k+1 (mateixa definició que a Avui)
+    const nightWk = nightWakesOf(k);
+    const naps    = sl.filter(s=>s.kind==='nap');
+    const napMs   = naps.reduce((a,s)=>a+dur(s),0);
+    const napN    = naps.length;
     const feeds   = its.filter(s=>s._tbl==='feedings');
     const ml = feeds.reduce((a,f)=>a+((f.amount_start!=null&&f.amount_end!=null)?Math.max(0,f.amount_start-f.amount_end):0),0);
     const dp = its.filter(s=>s._tbl==='diapers').length;
@@ -1149,7 +1146,7 @@ function renderLog(){
     if(nightMs) parts.push(`🌙 ${fmtDur(nightMs)}`);
     if(napMs||napN) parts.push(`😴 ${fmtDur(napMs)} (${napN})`);
     if(feeds.length) parts.push(`🍼 ${feeds.length}${ml?` · ${ml} ml`:''}`);
-    if(dp) parts.push(`🚼 ${dp}`);
+    if(dp) parts.push(`🩲 ${dp}`);
     const rows = withAwakeGaps(its).reverse();
     return `<div class="daydate">${fmtD(k+'T12:00')}</div>
       <div class="daysum">${parts.join(' · ')||'sense registres'}</div>
@@ -1645,6 +1642,6 @@ function show(id,txt,cls){ $(id).innerHTML=`<div class="msg ${cls}">${txt}</div>
 
 boot();
 </script>
-<!-- Dormilega v29 -->
+<!-- Dormilega v30 -->
 </body>
 </html>
