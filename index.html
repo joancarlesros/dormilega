@@ -131,10 +131,6 @@
   .sbbar{display:block;height:5px;border-radius:3px;background:rgba(255,255,255,.09);overflow:hidden}
   .sbbar i{display:block;height:100%;border-radius:3px;transition:width .4s}
   .sbrow b{font-size:.72rem;text-align:right}
-  .fieldrow{display:flex;gap:8px;align-items:stretch}
-  .fieldrow input{flex:1;margin:0}
-  .nowbtn{flex:0 0 auto;padding:0 14px;border-radius:12px;background:var(--card2);color:var(--accent);
-    font-size:.82rem;font-weight:600;border:1px solid rgba(167,139,250,.35)}
   .hidden{display:none!important}
   #rotate{display:none}
   @media (max-width:920px) and (orientation:landscape){
@@ -288,9 +284,9 @@
   <button class="pillbtn feed" id="feedBtnMain" onclick="openFeed(null)">🍼 Presa de biberó</button>
   <button class="pillbtn diaper" onclick="openDiaper(null)">🩲 Canvi de bolquer</button>
 
-  <div class="row" style="align-items:flex-end;margin-bottom:8px">
+  <div class="row" style="align-items:baseline;margin-bottom:8px;gap:10px">
     <h2 style="margin:0">Avui</h2>
-    <div class="sub" id="dayCompareNote" style="font-size:.58rem;text-align:right;line-height:1.3"></div>
+    <div class="sub" id="dayCompareNote" style="font-size:.58rem;text-align:right;line-height:1.3;flex:1"></div>
   </div>
   <div class="daytotals" id="dayTotals"></div>
   <p class="sub" style="margin:26px 0 10px">Cronologia d'avui</p>
@@ -478,8 +474,8 @@
     <option value="llit_pares">👨‍👩‍👦 Llit dels pares</option>
   </select>
   <p class="sub" style="margin:4px 0 0;font-size:.68rem">Indica on <b>s'ha adormit</b>, encara que després el traslladessis: el que compta per als càlculs és l'associació d'inici del son (com concilia), no on ha passat més estona. Si s'adorm als braços i el passes al bressol, marca <b>braços</b>.</p>
-  <label>Inici</label><div class="fieldrow"><input id="ed-start" type="datetime-local" oninput="edKindHint()"><button type="button" class="nowbtn" onclick="setNow('ed-start')">Ara</button></div>
-  <label>Fi (buit = encara dorm)</label><div class="fieldrow"><input id="ed-end" type="datetime-local" oninput="edKindHint()"><button type="button" class="nowbtn" onclick="setNow('ed-end')">Ara</button></div>
+  <label>Inici</label><input id="ed-start" type="datetime-local" oninput="edKindHint()">
+  <label>Fi (buit = encara dorm)</label><input id="ed-end" type="datetime-local" oninput="edKindHint()">
   <div id="ed-msg"></div>
   <div class="modal-actions">
     <button class="secondary" onclick="closeEditor()">Cancel·lar</button>
@@ -491,7 +487,7 @@
 <!-- ══════ EDITOR PRESA ══════ -->
 <dialog id="feeditor">
   <h2 style="margin-top:0" id="fd-title">Registre de presa</h2>
-  <label>Hora</label><div class="fieldrow"><input id="fd-start" type="datetime-local"><button type="button" class="nowbtn" onclick="setNow('fd-start')">Ara</button></div>
+  <label>Hora</label><input id="fd-start" type="datetime-local">
   <div class="grid2">
     <div><label>Aigua (ml) *</label><input id="fd-qini" type="number" inputmode="decimal" min="0" step="5" placeholder="obligatori"></div>
     <div><label>En queden (ml)</label><input id="fd-qleft" type="number" inputmode="decimal" min="0" step="5" placeholder="res"></div>
@@ -520,7 +516,7 @@
 <!-- ══════ EDITOR MESURA ══════ -->
 <dialog id="measeditor">
   <h2 style="margin-top:0" id="ms-title">⚖️ Pes i alçada</h2>
-  <label>Data</label><div class="fieldrow"><input id="ms-time" type="datetime-local"><button type="button" class="nowbtn" onclick="setNow('ms-time')">Ara</button></div>
+  <label>Data</label><input id="ms-time" type="datetime-local">
   <div class="grid2">
     <div><label>Pes (kg)</label><input id="ms-weight" type="number" inputmode="decimal" min="0" step="0.01" placeholder="4.35"></div>
     <div><label>Alçada (cm)</label><input id="ms-height" type="number" inputmode="decimal" min="0" step="0.5" placeholder="54"></div>
@@ -536,7 +532,7 @@
 <!-- ══════ EDITOR BOLQUER ══════ -->
 <dialog id="diapeditor">
   <h2 style="margin-top:0" id="dp-title">🩲 Canvi de bolquer</h2>
-  <label>Hora</label><div class="fieldrow"><input id="dp-time" type="datetime-local"><button type="button" class="nowbtn" onclick="setNow('dp-time')">Ara</button></div>
+  <label>Hora</label><input id="dp-time" type="datetime-local">
   <div class="grid2" style="margin-top:14px">
     <label style="display:flex;align-items:center;gap:8px;margin:0;font-size:1rem;color:var(--text)"><input type="checkbox" id="dp-pee" style="width:auto"> 💧 Pipí</label>
     <label style="display:flex;align-items:center;gap:8px;margin:0;font-size:1rem;color:var(--text)"><input type="checkbox" id="dp-poo" style="width:auto"> 💩 Caca</label>
@@ -862,7 +858,6 @@ function prediction(){
   return { nap, bed, ww };
 }
 
-function setNow(id){ $(id).value=toLocalInput(new Date()); if(id.startsWith('ed-')) edKindHint(); }
 async function toggleSleep(){
   const og = ongoing();
   if (og){
@@ -1893,6 +1888,6 @@ function show(id,txt,cls){ $(id).innerHTML=`<div class="msg ${cls}">${txt}</div>
 
 boot();
 </script>
-<!-- Dormilega v35 -->
+<!-- Dormilega v37 -->
 </body>
 </html>
