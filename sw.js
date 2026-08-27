@@ -6,7 +6,7 @@
      de seguida en obrir l'app.
    - Llibreries CDN (URL versionades) i icones: CACHE-FIRST → ràpid i estable.
    - Dades de Supabase: mai es desen a la memòria cau. */
-const CACHE = 'dormilega-v39';
+const CACHE = 'dormilega-v40';
 const SHELL = [
   './index.html',
   './manifest.webmanifest',
