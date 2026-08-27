@@ -131,6 +131,12 @@
   .sbbar{display:block;height:5px;border-radius:3px;background:rgba(255,255,255,.09);overflow:hidden}
   .sbbar i{display:block;height:100%;border-radius:3px;transition:width .4s}
   .sbrow b{font-size:.72rem;text-align:right}
+  .dayring{margin:6px auto 4px;max-width:340px}
+  .dayring svg{width:100%;height:auto;display:block}
+  .dayring #ring-value{transition:opacity .3s}
+  .dayring.sleeping #ring-value{animation:ringbreath 4.2s ease-in-out infinite}
+  @keyframes ringbreath{0%,100%{opacity:1}50%{opacity:.55}}
+  @media (prefers-reduced-motion:reduce){ .dayring.sleeping #ring-value{animation:none} }
   .hidden{display:none!important}
   #rotate{display:none}
   @media (max-width:920px) and (orientation:landscape){
@@ -261,28 +267,7 @@
     <div id="syncdot" style="font-size:.72rem;color:var(--muted);text-align:right;white-space:nowrap"></div>
   </div>
 
-  <div class="pred" style="margin-top:8px">
-    <div class="card">
-      <div class="lbl">😴 Propera migdiada</div>
-      <div class="time" id="pred-nap">--:--</div>
-      <div class="lbl" id="pred-nap-sub"></div>
-    </div>
-    <div class="card">
-      <div class="lbl">🍼 Propera presa</div>
-      <div class="time" id="pred-feed">--:--</div>
-      <div class="lbl" id="pred-feed-sub"></div>
-    </div>
-  </div>
-
-  <div class="statuscircle" id="statusCircle">
-    <div class="emoji" id="st-emoji">☀️</div>
-    <div class="t" id="st-timer">--:--</div>
-    <div class="lbl" id="st-label">despert</div>
-  </div>
-
-  <button class="pillbtn sleep" id="mainBtn" onclick="toggleSleep()">😴 Comença a dormir</button>
-  <button class="pillbtn feed" id="feedBtnMain" onclick="openFeed(null)">🍼 Presa de biberó</button>
-  <button class="pillbtn diaper" onclick="openDiaper(null)">🩲 Canvi de bolquer</button>
+  <div id="dayRing" class="dayring"></div>
 
   <div class="row" style="align-items:baseline;margin-bottom:8px;gap:10px">
     <h2 style="margin:0">Avui</h2>
@@ -398,7 +383,7 @@
   </div>
   <div class="card">
     <h2 style="margin-top:0">📅 Totals d'avui, vigília i índex</h2>
-    <p class="sub" style="margin-bottom:0"><b>Còmput dels totals:</b> per <b>finestres entre llindars</b>, no per registres sencers. Els llindars són l'<b>hora de llit per edat</b> (en la data del registre) i el <b>despertar real</b> del matí (fi de l'últim tram de nit abans del migdia; 7:00 per defecte si no n'hi ha). Un son que travessi un llindar es reparteix entre les dues bandes. Per això les 6:00 de la classificació <b>no afecten cap total</b>: només etiqueten un son de matinada com a continuació de la nit. <b>A Avui:</b> 🌙 <b>nit</b> = la nit anterior sencera (vespre d'ahir + matinada d'avui); 😴 <b>migdiades</b> i 👶 <b>despert</b> = des del despertar d'aquest matí fins ara; 💤 <b>son total</b> = nit + migdiades (per tant, quadra). La 3a línia de cada requadre és el <b>promig del nadó</b> als últims 7 dies complets (o els acumulats si encara no n'hi ha 7), <b>a aquesta mateixa hora</b>; la fletxa compara el valor d'avui amb aquest promig (verd = per sobre, vermell = per sota). Als requadres amb comptador, el <b>/x.x</b> és el promig de despertars, migdiades o preses (a despertars, menys és millor). No es compara amb cap norma. <b>A l'Historial</b> (dies tancats, de despertar a despertar ≈24 h), la 3a línia és <b>vs esperat</b>: son total vs rang per edat (NSF/AAP), despertars nocturns vs típics, despert = 24 h − rang de son, ml vs ~150 ml/kg/dia (amb l'últim pes registrat) o 8–12 preses si encara no hi ha pes, i ≥6 bolquers/dia. El nombre de migdiades es compara amb el rang típic per edat. <b>Índex de son:</b> es calcula <b>per dia</b>, amb 6 puntuacions contínues de 0 a 100 (son total, nit, migdiades, despert, preses i bolquers); l'índex global és la mitjana de les que tenen dades. Cada puntuació val 100 dins del rang de referència i baixa de manera gradual segons com se n'allunyi — <b>sense esglaons</b>, de manera que es mou cada dia. Referències: 💤 son total i 👶 despert vs rang per edat (NSF/AAP); 🌙 nit segons els <b>despertars</b> (menys és millor: 0 despertars puntua 100, només es penalitza per sobre del típic per edat); 🍼 preses vs ~150 ml/kg/dia (o 8–12 preses si encara no hi ha pes); 🩲 bolquers vs ≥6/dia. 😴 <b>Migdiades</b> es puntua pel <b>nombre</b> vs el rang típic per edat (0–2 m: 3–5 · 2–4 m: 3–4 · 4–6 m: 2–3 · 6–12 m: 2 · 12+ m: 1; síntesi de Pampers/Huckleberry/Little Ones). Com que cada puntuació només depèn de les dades d'aquell dia, l'evolució de l'índex es <b>reconstrueix retroactivament</b> des dels registres i se sincronitza entre dispositius (ja no es desa cap còpia local). L'índex es mostra sobre l'<b>últim dia complet</b> (amb la data indicada), perquè el dia en curs encara no té les hores fetes. Totes les mitjanes i estadístiques compten des del <b>primer dia complet de registres</b> (els registres parcials del primer dia no esbiaixen les mitjanes).</p>
+    <p class="sub" style="margin-bottom:0"><b>Anell del dia (Home):</b> mostra el pla de son d'avui — despertar (☀️), migdiades i hora de llit (🌙) — combinant les migdiades <b>ja fetes</b> (reals) amb les <b>previstes</b> (traç puntejat). Les previsions es recalculen des de l'últim esdeveniment real amb les mateixes funcions de tota l'app: finestra de vigília adaptada (50% edat + 50% mediana de 7 dies, ±30%), reactivitat si l'última migdiada va ser curta, nombre de migdiades i hora de llit per edat. La durada de cada migdiada prevista és la teva <b>mediana observada</b> (o un valor típic per edat si encara no hi ha prou dades). El centre mostra l'estat actual (compte enrere de la propera migdiada, o el temps que porta dormint) i un punt marca l'hora actual sobre l'anell. Tocar el centre inicia o atura el son. Presa i bolquer es registren amb el botó <b>+</b>. Recorda que és una guia orientativa, no una pauta rígida: l'alimentació és a demanda i el son real mana sobre la predicció. <b>Còmput dels totals:</b> per <b>finestres entre llindars</b>, no per registres sencers. Els llindars són l'<b>hora de llit per edat</b> (en la data del registre) i el <b>despertar real</b> del matí (fi de l'últim tram de nit abans del migdia; 7:00 per defecte si no n'hi ha). Un son que travessi un llindar es reparteix entre les dues bandes. Per això les 6:00 de la classificació <b>no afecten cap total</b>: només etiqueten un son de matinada com a continuació de la nit. <b>A Avui:</b> 🌙 <b>nit</b> = la nit anterior sencera (vespre d'ahir + matinada d'avui); 😴 <b>migdiades</b> i 👶 <b>despert</b> = des del despertar d'aquest matí fins ara; 💤 <b>son total</b> = nit + migdiades (per tant, quadra). La 3a línia de cada requadre és el <b>promig del nadó</b> als últims 7 dies complets (o els acumulats si encara no n'hi ha 7), <b>a aquesta mateixa hora</b>; la fletxa compara el valor d'avui amb aquest promig (verd = per sobre, vermell = per sota). Als requadres amb comptador, el <b>/x.x</b> és el promig de despertars, migdiades o preses (a despertars, menys és millor). No es compara amb cap norma. <b>A l'Historial</b> (dies tancats, de despertar a despertar ≈24 h), la 3a línia és <b>vs esperat</b>: son total vs rang per edat (NSF/AAP), despertars nocturns vs típics, despert = 24 h − rang de son, ml vs ~150 ml/kg/dia (amb l'últim pes registrat) o 8–12 preses si encara no hi ha pes, i ≥6 bolquers/dia. El nombre de migdiades es compara amb el rang típic per edat. <b>Índex de son:</b> es calcula <b>per dia</b>, amb 6 puntuacions contínues de 0 a 100 (son total, nit, migdiades, despert, preses i bolquers); l'índex global és la mitjana de les que tenen dades. Cada puntuació val 100 dins del rang de referència i baixa de manera gradual segons com se n'allunyi — <b>sense esglaons</b>, de manera que es mou cada dia. Referències: 💤 son total i 👶 despert vs rang per edat (NSF/AAP); 🌙 nit segons els <b>despertars</b> (menys és millor: 0 despertars puntua 100, només es penalitza per sobre del típic per edat); 🍼 preses vs ~150 ml/kg/dia (o 8–12 preses si encara no hi ha pes); 🩲 bolquers vs ≥6/dia. 😴 <b>Migdiades</b> es puntua pel <b>nombre</b> vs el rang típic per edat (0–2 m: 3–5 · 2–4 m: 3–4 · 4–6 m: 2–3 · 6–12 m: 2 · 12+ m: 1; síntesi de Pampers/Huckleberry/Little Ones). Com que cada puntuació només depèn de les dades d'aquell dia, l'evolució de l'índex es <b>reconstrueix retroactivament</b> des dels registres i se sincronitza entre dispositius (ja no es desa cap còpia local). L'índex es mostra sobre l'<b>últim dia complet</b> (amb la data indicada), perquè el dia en curs encara no té les hores fetes. Totes les mitjanes i estadístiques compten des del <b>primer dia complet de registres</b> (els registres parcials del primer dia no esbiaixen les mitjanes).</p>
   </div>
   <div class="card">
     <h2 style="margin-top:0">🔮 Predicció de migdiada i presa</h2>
@@ -981,14 +966,116 @@ document.addEventListener('touchend',()=>{ ptrY=null; });
 
 function renderAll(){ renderHome(); renderLog(); renderStats(); renderSettings(); scheduleNotif(); }
 
-function tick(){
+/* Centre de l'anell segons l'estat actual */
+function ringCenter(){
   const og = ongoing();
-  const done = sessions.filter(s=>s.end_at);
-  const ref = og ? new Date(og.start_at) : (done.length? new Date(done[done.length-1].end_at): null);
-  if(ref){
-    const el = mins(Date.now()-ref);
-    $('st-timer').textContent = `${Math.floor(el/60)}:${String(el%60).padStart(2,'0')}`;
-  } else $('st-timer').textContent='--:--';
+  if(og){
+    const el = Date.now()-new Date(og.start_at).getTime();
+    return {label: og.kind==='night'?'🌙 Nit':'😴 Dormint', value: fmtDur(el),
+            sub: 'des de les '+fmtT(new Date(og.start_at)), sleeping:true};
+  }
+  const p = prediction();
+  if(p.nap){
+    const d = p.nap-Date.now();
+    if(d>0) return {label:'Propera migdiada en', value:fmtDur(d), sub:'a les '+fmtT(p.nap), sleeping:false};
+    return {label:'Migdiada', value:'ja toca', sub:`porta ${fmtDur(Date.now()-p.nap)}`, sleeping:false};
+  }
+  const d = p.bed-Date.now();
+  if(d>0) return {label:"Al llit d'aquí a", value:fmtDur(d), sub:'a les '+fmtT(p.bed), sleeping:false};
+  return {label:'', value:'bona nit 🌙', sub:'', sleeping:false};
+}
+function tick(){
+  const c = ringCenter();
+  const v=$('ring-value');
+  if(v){ v.textContent=c.value; $('ring-label').textContent=c.label; $('ring-sub').textContent=c.sub; }
+  const dot=$('ringNow');
+  if(dot){
+    const {wake,bed}=daySchedule(); const now=new Date();
+    if(now>=wake && now<=bed){
+      const cx=200,cy=195,R=150,A0=225,A1=-45, rd=x=>x*Math.PI/180;
+      const a=A0+(A1-A0)*Math.max(0,Math.min(1,(now-wake)/Math.max(1,bed-wake)));
+      dot.setAttribute('cx',(cx+R*Math.cos(rd(a))).toFixed(1));
+      dot.setAttribute('cy',(cy-R*Math.sin(rd(a))).toFixed(1));
+      dot.setAttribute('r','7');
+    } else dot.setAttribute('r','0');
+  }
+}
+
+/* ── Pla del dia (anell estil Napper) ── */
+function napDurationEstimate(){
+  const durs = sessions.filter(s=>s.kind==='nap'&&s.end_at).slice(-14)
+    .map(s=>new Date(s.end_at)-new Date(s.start_at)).filter(x=>x>10*60000);
+  if(durs.length>=3){ durs.sort((a,b)=>a-b); return durs[Math.floor(durs.length/2)]; }  // mediana observada
+  const w=ageWeeks(); const mins = w<14?45:(w<26?60:75); return mins*60000;              // fallback per edat
+}
+function daySchedule(){
+  const now=new Date(), tk=dayKey(now);
+  const wake=wakeAt(tk);
+  const bh=bedHourAt(now); const bed=new Date(now); bed.setHours(Math.floor(bh),Math.round((bh%1)*60),0,0);
+  const napDur=napDurationEstimate();
+  const maxNaps=napCountRangeAt(tk)[1];
+  const og=ongoing();
+  // migdiades ja fetes avui (reals) + la que estigui en curs
+  const naps = sessions.filter(s=>s.kind==='nap'&&dayKey(s.start_at)===tk&&s.end_at)
+    .map(s=>({start:new Date(s.start_at), end:new Date(s.end_at), done:true}));
+  if(og && og.kind==='nap' && dayKey(og.start_at)===tk)
+    naps.push({start:new Date(og.start_at), end:new Date(new Date(og.start_at).getTime()+napDur), ongoing:true});
+  naps.sort((a,b)=>a.start-b.start);
+  const before=t=>naps.filter(n=>n.start<bed).length;
+  // primera futura amb la predicció reactiva; la resta, encadenant la finestra adaptada
+  let cursor = naps.length? naps[naps.length-1].end : wake;
+  const p=prediction();
+  // primera futura = la predicció reactiva (encara que vagi una mica endarrerida, per coincidir amb el centre)
+  if(!og && p.nap && before()<maxNaps && p.nap<new Date(bed-45*60000)){
+    naps.push({start:p.nap, end:new Date(p.nap.getTime()+napDur), predicted:true});
+    cursor=new Date(p.nap.getTime()+napDur);
+  }
+  const ww=adaptedWW()*60000; let guard=0;
+  while(before()<maxNaps && guard++<8){
+    const st=new Date(cursor.getTime()+ww);
+    if(st >= new Date(bed - napDur - 30*60000)) break;   // deixa marge abans del llit
+    const e=new Date(st.getTime()+napDur);
+    naps.push({start:st, end:e, predicted:true}); cursor=e;
+  }
+  return {wake, bed, naps:naps.filter(n=>n.start<bed).sort((a,b)=>a.start-b.start)};
+}
+function renderDayRing(){
+  const host=$('dayRing'); if(!host) return;
+  const {wake,bed,naps}=daySchedule();
+  const cx=200,cy=195,R=150,A0=225,A1=-45, rd=d=>d*Math.PI/180;
+  const xy=(deg,r)=>[cx+r*Math.cos(rd(deg)), cy-r*Math.sin(rd(deg))];
+  const span=Math.max(1,bed-wake), clamp=t=>Math.max(0,Math.min(1,(t-wake)/span)), ang=t=>A0+(A1-A0)*clamp(t);
+  const arc=(a0,a1,r)=>{const [x0,y0]=xy(a0,r),[x1,y1]=xy(a1,r);const lg=Math.abs(a0-a1)>180?1:0;
+    return `M ${x0.toFixed(1)} ${y0.toFixed(1)} A ${r} ${r} 0 ${lg} 1 ${x1.toFixed(1)} ${y1.toFixed(1)}`;};
+  let s=`<svg viewBox="0 0 400 400" xmlns="http://www.w3.org/2000/svg" font-family="-apple-system,sans-serif">`;
+  s+=`<circle cx="${cx}" cy="${cy}" r="94" fill="transparent" style="cursor:pointer" onclick="toggleSleep()"/>`;
+  s+=`<path d="${arc(A0,A1,R)}" fill="none" stroke="#26264d" stroke-width="16" stroke-linecap="round"/>`;
+  for(const n of naps){
+    const col=n.done?'#4a4a8a':(n.ongoing?'#a78bfa':'#38386e');
+    const dash=n.predicted?'stroke-dasharray="2 7"':'';
+    if(ang(n.end)<ang(n.start)-0.1 || Math.abs(ang(n.end)-ang(n.start))>0.5)
+      s+=`<path d="${arc(ang(n.start),ang(n.end),R)}" fill="none" stroke="${col}" stroke-width="30" stroke-linecap="round" ${dash}/>`;
+    const [mx,my]=xy((ang(n.start)+ang(n.end))/2,R);
+    s+=`<text x="${mx}" y="${my}" font-size="16" text-anchor="middle" dominant-baseline="central">😴</text>`;
+    const [sx,sy]=xy(ang(n.start),R+28); s+=`<text x="${sx}" y="${sy}" font-size="12" fill="#8f8fce" text-anchor="middle" dominant-baseline="central">${fmtT(n.start)}</text>`;
+    const [ex,ey]=xy(ang(n.end),R+28);   s+=`<text x="${ex}" y="${ey}" font-size="12" fill="#8f8fce" text-anchor="middle" dominant-baseline="central">${fmtT(n.end)}</text>`;
+  }
+  const [wx,wy]=xy(A0,R);
+  s+=`<circle cx="${wx}" cy="${wy}" r="22" fill="#3a2f00" stroke="#fcd34d" stroke-width="2.5"/><text x="${wx}" y="${wy}" font-size="19" text-anchor="middle" dominant-baseline="central">☀️</text>`;
+  const [wtx,wty]=xy(A0,R+40); s+=`<text x="${wtx}" y="${wty}" font-size="13" fill="#fcd34d" text-anchor="middle" font-weight="700" dominant-baseline="central">${fmtT(wake)}</text>`;
+  const [bx,by]=xy(A1,R);
+  s+=`<circle cx="${bx}" cy="${by}" r="22" fill="#241a34" stroke="#818cf8" stroke-width="2.5"/><text x="${bx}" y="${by}" font-size="19" text-anchor="middle" dominant-baseline="central">🌙</text>`;
+  const [btx,bty]=xy(A1,R+40); s+=`<text x="${btx}" y="${bty}" font-size="13" fill="#818cf8" text-anchor="middle" font-weight="700" dominant-baseline="central">${fmtT(bed)}</text>`;
+  const now=new Date();
+  if(now>=wake && now<=bed){ const [nx,ny]=xy(ang(now),R); s+=`<circle id="ringNow" cx="${nx}" cy="${ny}" r="7" fill="#fff" stroke="#a78bfa" stroke-width="3"/>`; }
+  else s+=`<circle id="ringNow" cx="-99" cy="-99" r="0"/>`;
+  const c=ringCenter();
+  s+=`<text id="ring-label" x="${cx}" y="${cy-26}" font-size="14" fill="#9d9cc7" text-anchor="middle" dominant-baseline="central">${c.label}</text>`;
+  s+=`<text id="ring-value" x="${cx}" y="${cy+6}" font-size="33" fill="#f1f0ff" text-anchor="middle" font-weight="800" dominant-baseline="central">${c.value}</text>`;
+  s+=`<text id="ring-sub" x="${cx}" y="${cy+34}" font-size="13" fill="#9d9cc7" text-anchor="middle" dominant-baseline="central">${c.sub}</text>`;
+  s+=`</svg>`;
+  host.className='dayring'+(c.sleeping?' sleeping':'');
+  host.innerHTML=s;
 }
 
 function renderHome(){
@@ -996,42 +1083,7 @@ function renderHome(){
   $('home-title').textContent = `${baby.name}`;
   $('home-age').textContent = ageLabel();
   const og = ongoing();
-  const c = $('statusCircle');
-  c.classList.toggle('sleeping', !!og);
-  $('st-emoji').textContent = og ? (og.kind==='night' ? '🌙' : '😴') : '👶';
-  $('st-label').textContent = og ? (og.kind==='night'?'dormint (nit)':'fent la migdiada') : 'despert';
-  const btn=$('mainBtn');
-  btn.textContent = og ? "👶 S'ha despertat" : '😴 Comença a dormir';
-
-  const p = prediction();
-  $('pred-nap').textContent = p.nap ? fmtT(p.nap) : '—';
-  $('pred-nap-sub').textContent = p.nap
-    ? (p.nap<new Date()? `porta ${fmtDur(new Date()-p.nap)} de retard` : `d'aquí a ${fmtDur(p.nap-new Date())}`)
-    : (og? 'dormint ara':'avui ja no toca');
-
-  const lastF = feedings.length? new Date(feedings[feedings.length-1].start_at):null;
-  const gapH = ageWeeks()<14?3:4;
-  let gapMs = gapH*3600000;
-  // reactivitat: si l'última presa va ser petita, avança (mín 2 h, com a molt 45 min abans)
-  const withMl = feedings.filter(f=>f.amount_start!=null && f.amount_end!=null).slice(-8);
-  const lastFeed = feedings.length? feedings[feedings.length-1]: null;
-  if (lastFeed && lastFeed.amount_start!=null && lastFeed.amount_end!=null && withMl.length>=5){
-    const taken = f=>Math.max(0, f.amount_start-f.amount_end);
-    const med = median(withMl.map(taken));
-    const lastTaken = taken(lastFeed);
-    if (med>0 && lastTaken < 0.66*med){
-      let g = gapMs*(lastTaken/med);
-      g = Math.max(2*3600000, g);           // terra 2 h
-      g = Math.max(gapMs-45*60000, g);      // avançar com a molt 45 min
-      gapMs = g;
-    }
-  }
-  const nf = lastF? new Date(lastF.getTime()+gapMs):null;
-  $('pred-feed').textContent = nf? fmtT(nf):'—';
-  $('pred-feed-sub').textContent = nf?
-    (nf<new Date()? `porta ${fmtDur(new Date()-nf)} de retard`
-                  : `d'aquí a ${fmtDur(nf-new Date())}`)
-    : 'registra una presa';
+  renderDayRing();
   tick();
 
   const tk=dayKey(new Date());
@@ -1951,6 +2003,6 @@ function show(id,txt,cls){ $(id).innerHTML=`<div class="msg ${cls}">${txt}</div>
 
 boot();
 </script>
-<!-- Dormilega v38 -->
+<!-- Dormilega v39 -->
 </body>
 </html>
