@@ -318,6 +318,7 @@
   <div class="card hidden" id="statsEmpty">
     <p class="sub" style="margin:0">📊 Aquí apareixeran les gràfiques quan hi hagi registres. Comença per registrar son i preses a la pantalla <b>Avui</b>: amb 2–3 dies ja es veuen tendències.</p>
   </div>
+  <div id="chartsFallback" class="card hidden"><p class="sub" style="margin:0">⚠️ No s'han pogut carregar les gràfiques (sembla que no hi ha connexió). Recarrega la pàgina amb dades i tornaran a aparèixer.</p></div>
   <div id="statsCharts">
   <h2 style="margin-bottom:2px">📊 Dades</h2>
   <p class="sub" style="font-size:.66rem;margin:0 0 10px">Xifres i gràfics en cru, sense interpretació. Els gràfics mostren tots els dies registrats; les mitjanes només compten dies sencers (sense el dia en curs).</p>
@@ -868,6 +869,7 @@ async function toggleSleep(){
     if(!wasManual) patch.kind = classifyKind(og.start_at, end);
     await dbUpdate('sleep_sessions', og.id, patch);
     renderAll();
+    maybeMorningReport(patch.kind || og.kind, end);   // informe si acabem de tancar la nit
   } else {
     // començar a dormir: cal saber on s'ha adormit → s'obre el registre
     openEditor(null, {start:new Date(), end:'', msg:"Indica on s'ha adormit per començar el registre"});
@@ -875,7 +877,36 @@ async function toggleSleep(){
 }
 
 /* ───────── Notificacions ───────── */
-function askNotif(){ if('Notification' in window) Notification.requestPermission().then(scheduleNotif); }
+async function askNotif(){
+  if(!('Notification' in window) || !('serviceWorker' in navigator))
+    return show('set-msg','Aquest navegador no admet notificacions. A l\'iPhone cal tenir l\'app instal·lada a la pantalla d\'inici (iOS 16.4+).','err');
+  let perm = Notification.permission;
+  if(perm==='default'){ try{ perm = await Notification.requestPermission(); }catch(e){ perm='denied'; } }
+  if(perm==='granted'){
+    scheduleNotif();
+    try{ const r = await navigator.serviceWorker.ready;
+      r.showNotification('🌙 Dormilega', {body:'Notificacions activades ✓', icon:'icons/icon-192.png'}); }catch(e){}
+    show('set-msg','Activades ✓ — t\'arribaran mentre tinguis l\'app oberta (per ara no n\'hi ha amb l\'app tancada).','ok');
+  } else {
+    show('set-msg','Notificacions bloquejades. Activa-les a Ajustos del sistema → Dormilega → Notificacions.','err');
+  }
+}
+/* Informe del matí: en registrar el despertar de la nit, es tanca el dia anterior.
+   Mostra l'índex d'aquell dia (un cop per dia). Sense backend: només amb l'app oberta. */
+function maybeMorningReport(kind, endISO){
+  const end=new Date(endISO);
+  if(kind!=='night' || end.getHours()>=12) return;
+  const y=dayKey(new Date(end.getTime()-864e5));         // dia que acaba de tancar
+  if(localStorage.getItem('dl_report_'+y)) return;
+  const ds=dayScores(y);
+  if(!ds || ds.global==null) return;
+  localStorage.setItem('dl_report_'+y,'1');
+  toast(`🌙 Informe de ${fmtD(y+'T12:00')} llest · índex ${ds.global}/100`);
+  if('Notification' in window && Notification.permission==='granted'){
+    navigator.serviceWorker.ready.then(r=>r.showNotification('🌙 Dormilega — informe llest',
+      {body:`Índex del dia: ${ds.global}/100. Obre Estadístiques per veure'n el detall.`, icon:'icons/icon-192.png'})).catch(()=>{});
+  }
+}
 function scheduleNotif(){
   if(!('Notification' in window) || Notification.permission!=='granted') return;
   clearTimeout(notifTimer); clearTimeout(feedTimer);
@@ -1336,8 +1367,9 @@ function renderLog(){
     // despert: fins al despertar de l'endemà; si és avui, fins ara
     const endSpan = isToday ? new Date() : wakeAt(nextKey(k));
     const span = Math.max(0, endSpan - wakeAt(k));
+    const awake = Math.max(0, span - sleepMsBetween(wakeAt(k), endSpan));   // finestra − son real dins la finestra
     const o = {total, night:nightMs, wakes:nightWakesOf(k), naps:napMs, napN:napCountOf(k),
-               awake:Math.max(0, span-napMs), feedN:feeds.length, ml, dp};
+               awake, feedN:feeds.length, ml, dp};
     const rows = withAwakeGaps(its).reverse();
     const timeTag = isToday && lastSync ? `<span class="dtime">fins les ${fmtT(lastSync)}</span>` : '';
     return `<div class="daydate">${fmtD(k+'T12:00')} ${timeTag}</div>
@@ -1524,11 +1556,11 @@ function buildInsights(){
   if(nfVals.length>=3){
     const nfAvg=nfVals.reduce((a,b)=>a+b,0)/nfVals.length;
     if(w<14) push('🌜','info',`Preses nocturnes: ${nfAvg.toFixed(1)}/nit`,
-      'A 0–3 mesos són esperables 2–4: el tram llarg de son creixerà amb la capacitat gàstrica. De nit, estímuls al mínim: llum tènue, sense jocs, bolquer només si cal.');
-    else if(nfAvg>2){ score-=5; push('🌜','info',`Preses nocturnes: ${nfAvg.toFixed(1)}/nit`,
-      'A partir dels 4–6 mesos, moltes preses nocturnes poden ser més hàbit que gana. Reforça la ingesta diürna i comenta amb el pediatre com espaiar-les.'); }
-    else push('🌜','ok',`Preses nocturnes: ${nfAvg.toFixed(1)}/nit`,
-      'Ben alineat amb la consolidació del son nocturn.');
+      'A 0–3 mesos són esperables 2–4 i no són cap problema: alimentar a demanda. El tram llarg de son es consolidarà sol amb l\'edat i una bona ingesta diürna.');
+    else if(nfAvg<=1) push('🌜','ok',`Preses nocturnes: ${nfAvg.toFixed(1)}/nit`,
+      'Molt bé: gairebé sense preses nocturnes, senyal de progrés cap a dormir tota la nit.');
+    else push('🌜','info',`Preses nocturnes: ${nfAvg.toFixed(1)}/nit`,
+      'Mentre la ingesta diürna sigui suficient, fer-ne menys de nit és positiu (l\'objectiu és consolidar la nit quan l\'edat ho permeti). Es redueixen soles; no cal forçar.');
   }
   // 8b2) Ingesta vs objectiu per pes (150 ml/kg/dia)
   const wmI = measures.filter(m=>m.weight_g);
@@ -1739,7 +1771,38 @@ function renderStats(){
       scales:{x:{type:'linear',min:0,max:xMax,ticks:{color:'#9d9cc7',stepSize:xMax<=3?0.5:1,callback:v=>v+' m'},grid:{color:'rgba(255,255,255,.05)'}},
               y:{ticks:{color:'#9d9cc7'},grid:{color:'rgba(255,255,255,.07)'}}}}});
 }
-function mkChart(id,cfg){ if(charts[id]) charts[id].destroy(); charts[id]=new Chart($(id).getContext('2d'),cfg); }
+let chartRetry=false;
+function ensureChart(){
+  if(window.Chart) return Promise.resolve(true);
+  return new Promise(res=>{
+    const urls=['https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.3/chart.umd.min.js',
+                'https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js'];
+    let i=0;
+    const next=()=>{
+      if(window.Chart) return res(true);
+      if(i>=urls.length) return res(false);
+      const sc=document.createElement('script');
+      sc.src=urls[i++];
+      sc.onload=()=>{ window.Chart? res(true) : next(); };
+      sc.onerror=next;
+      document.head.appendChild(sc);
+    };
+    next();
+  });
+}
+function mkChart(id,cfg){
+  const el=$(id); if(!el) return;
+  if(!window.Chart){
+    // Chart.js encara no carregat: prova de carregar-lo i torna a pintar
+    if(!chartRetry){ chartRetry=true;
+      ensureChart().then(ok=>{ chartRetry=false;
+        const fb=$('chartsFallback'); if(fb) fb.classList.toggle('hidden', ok);
+        if(ok) renderStats(); }); }
+    return;
+  }
+  try{ if(charts[id]) charts[id].destroy(); charts[id]=new Chart(el.getContext('2d'),cfg); }
+  catch(e){ console.warn('gràfic',id,e && e.message); }
+}
 
 /* ───────── Editor de son ───────── */
 let editId=null;
@@ -1888,6 +1951,6 @@ function show(id,txt,cls){ $(id).innerHTML=`<div class="msg ${cls}">${txt}</div>
 
 boot();
 </script>
-<!-- Dormilega v37 -->
+<!-- Dormilega v38 -->
 </body>
 </html>
