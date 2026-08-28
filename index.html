@@ -49,8 +49,9 @@
   button.small{width:auto;padding:8px 14px;font-size:.85rem;border-radius:10px}
   button.danger{background:transparent;color:var(--warn);border:1px solid var(--warn)}
   button:disabled{opacity:.5}
+  button,input,select,textarea,optgroup{font-family:inherit}
   /* Botons d'acció grans amb l'estil "píndola" dels badges de l'historial */
-  .pillbtn{width:100%;margin:0 0 12px;padding:13px;font-size:.95rem;font-weight:700;
+  .pillbtn{width:100%;margin:0 0 26px;padding:13px;font-size:.95rem;font-weight:700;
     border:1.5px solid;border-radius:999px;background:transparent;box-shadow:none}
   .pillbtn:active{transform:scale(.99)}
   .pillbtn.sleep{background:rgba(167,139,250,.18);color:var(--nap);border-color:rgba(167,139,250,.55)}
@@ -129,16 +130,12 @@
   .sdot.ok{color:var(--ok)}
   .sdot.warn{color:var(--moon)}
   .sbrow{display:grid;grid-template-columns:1fr 76px 26px;align-items:center;gap:8px;
-    font-size:.72rem;color:var(--muted);padding:4px 0}
+    font-size:.72rem;color:var(--text);padding:4px 0}
   .sbbar{display:block;height:5px;border-radius:3px;background:rgba(255,255,255,.09);overflow:hidden}
   .sbbar i{display:block;height:100%;border-radius:3px;transition:width .4s}
   .sbrow b{font-size:.72rem;text-align:right}
-  .dayring{margin:2px auto -2px;max-width:346px}
+  .dayring{margin:20px auto -14px;max-width:346px}
   .dayring svg{width:100%;height:auto;display:block}
-  .dayring #ring-value{transition:opacity .3s}
-  .dayring.sleeping #ring-value{animation:ringbreath 4.2s ease-in-out infinite}
-  @keyframes ringbreath{0%,100%{opacity:1}50%{opacity:.55}}
-  @media (prefers-reduced-motion:reduce){ .dayring.sleeping #ring-value{animation:none} }
   .daygrid .chip .v, .daytime, .dtime, #ring-value, #ring-sub,
   .time, .score, .kpi .v, .daydate .dtime{font-variant-numeric:tabular-nums;font-feature-settings:'tnum' 1}
   .hidden{display:none!important}
@@ -402,7 +399,7 @@
   </div>
   <div class="card">
     <h2 style="margin-top:0">📅 Totals d'avui, vigília i índex</h2>
-    <p class="sub" style="margin-bottom:0"><b>Anell del dia (Home):</b> mostra el pla de son d'avui — despertar (☀️), migdiades i hora de llit (🌙) — combinant les migdiades <b>ja fetes</b> (reals) amb les <b>previstes</b> (traç puntejat). Les previsions es recalculen des de l'últim esdeveniment real amb les mateixes funcions de tota l'app: finestra de vigília adaptada (50% edat + 50% mediana de 7 dies, ±30%), reactivitat si l'última migdiada va ser curta, nombre de migdiades i hora de llit per edat. La durada de cada migdiada prevista és la teva <b>mediana observada</b> (o un valor típic per edat si encara no hi ha prou dades). El <b>centre</b> mostra l'estat actual (despert o dormint, i quant fa que ho està); les targetes de dalt donen la <b>propera migdiada</b> i la <b>propera presa</b>. La propera migdiada de la targeta sempre apareix també a l'anell, encara que superi el nombre típic de migdiades del dia, perquè les dues indicacions coincideixin. Un punt clar marca l'hora actual sobre l'anell. Tocar el centre o la pastilla inicia o atura el son. Presa i bolquer es registren amb el botó <b>+</b>. Recorda que és una guia orientativa, no una pauta rígida: l'alimentació és a demanda i el son real mana sobre la predicció. <b>Còmput dels totals:</b> per <b>finestres entre llindars</b>, no per registres sencers. Els llindars són l'<b>hora de llit per edat</b> (en la data del registre) i el <b>despertar real</b> del matí (fi de l'últim tram de nit abans del migdia; 7:00 per defecte si no n'hi ha). Un son que travessi un llindar es reparteix entre les dues bandes. Per això les 6:00 de la classificació <b>no afecten cap total</b>: només etiqueten un son de matinada com a continuació de la nit. <b>A Avui:</b> 🌙 <b>nit</b> = la nit anterior sencera (vespre d'ahir + matinada d'avui); 😴 <b>migdiades</b> i 👶 <b>despert</b> = des del despertar d'aquest matí fins ara; 💤 <b>son total</b> = nit + migdiades (per tant, quadra). La 3a línia de cada requadre és el <b>promig del nadó</b> als últims 7 dies complets (o els acumulats si encara no n'hi ha 7), <b>a aquesta mateixa hora</b>; la fletxa compara el valor d'avui amb aquest promig (verd = per sobre, vermell = per sota). Als requadres amb comptador, el <b>/x.x</b> és el promig de despertars, migdiades o preses (a despertars, menys és millor). No es compara amb cap norma. <b>A l'Historial</b> (dies tancats, de despertar a despertar ≈24 h), la 3a línia és <b>vs esperat</b>: son total vs rang per edat (NSF/AAP), despertars nocturns vs típics, despert = 24 h − rang de son, ml vs ~150 ml/kg/dia (amb l'últim pes registrat) o 8–12 preses si encara no hi ha pes, i ≥6 bolquers/dia. El nombre de migdiades es compara amb el rang típic per edat. <b>Índex de son:</b> es calcula <b>per dia</b>, amb 6 puntuacions contínues de 0 a 100 (son total, nit, migdiades, despert, preses i bolquers); l'índex global és la mitjana de les que tenen dades. Cada puntuació val 100 dins del rang de referència i baixa de manera gradual segons com se n'allunyi — <b>sense esglaons</b>, de manera que es mou cada dia. Referències: 💤 son total i 👶 despert vs rang per edat (NSF/AAP); 🌙 nit segons els <b>despertars</b> (menys és millor: 0 despertars puntua 100, només es penalitza per sobre del típic per edat); 🍼 preses vs ~150 ml/kg/dia (o 8–12 preses si encara no hi ha pes); 🩲 bolquers vs ≥6/dia. 😴 <b>Migdiades</b> es puntua pel <b>nombre</b> vs el rang típic per edat (0–2 m: 3–5 · 2–4 m: 3–4 · 4–6 m: 2–3 · 6–12 m: 2 · 12+ m: 1; síntesi de Pampers/Huckleberry/Little Ones). Com que cada puntuació només depèn de les dades d'aquell dia, l'evolució de l'índex es <b>reconstrueix retroactivament</b> des dels registres i se sincronitza entre dispositius (ja no es desa cap còpia local). L'índex es mostra sobre l'<b>últim dia complet</b> (amb la data indicada), perquè el dia en curs encara no té les hores fetes. Totes les mitjanes i estadístiques compten des del <b>primer dia complet de registres</b> (els registres parcials del primer dia no esbiaixen les mitjanes).</p>
+    <p class="sub" style="margin-bottom:0"><b>Anell del dia (Home):</b> mostra el pla de son d'avui — despertar (☀️), migdiades i hora de llit (🌙) — combinant les migdiades <b>ja fetes</b> (reals) amb les <b>previstes</b> (traç puntejat). Les previsions es recalculen des de l'últim esdeveniment real amb les mateixes funcions de tota l'app: finestra de vigília adaptada (50% edat + 50% mediana de 7 dies, ±30%) i reactivitat si l'última migdiada va ser curta. El <b>nombre de migdiades no és fix</b>: s'encadenen migdiades mentre en càpiga una més (migdiada + una finestra de vigília) abans de l'hora de llit, així que surt sol de la finestra de vigília i l'edat. L'<b>hora de llit és dinàmica</b>: es calcula com l'última migdiada + una finestra de vigília, acotada ±45 min al voltant de la típica per edat, de manera que s'avança els dies de migdiades curtes i es retarda els de migdiades llargues (com fa Napper). Aquesta hora de llit és només la del <b>pla visual</b>; el llindar que separa nit de migdiada als càlculs i estadístiques es manté fix per edat, perquè és una frontera de classificació, no un objectiu. La durada de cada migdiada prevista és la teva <b>mediana observada</b> (o un valor típic per edat si encara no hi ha prou dades). El <b>centre</b> mostra l'estat actual (despert o dormint, i quant fa que ho està); les targetes de dalt donen la <b>propera migdiada</b> i la <b>propera presa</b>. La propera migdiada de la targeta sempre apareix també a l'anell, encara que superi el nombre típic de migdiades del dia, perquè les dues indicacions coincideixin. Un punt clar marca l'hora actual sobre l'anell. Tocar el centre o la pastilla inicia o atura el son. Presa i bolquer es registren amb el botó <b>+</b>. Recorda que és una guia orientativa, no una pauta rígida: l'alimentació és a demanda i el son real mana sobre la predicció. <b>Còmput dels totals:</b> per <b>finestres entre llindars</b>, no per registres sencers. Els llindars són l'<b>hora de llit per edat</b> (en la data del registre) i el <b>despertar real</b> del matí (fi de l'últim tram de nit abans del migdia; 7:00 per defecte si no n'hi ha). Un son que travessi un llindar es reparteix entre les dues bandes. Per això les 6:00 de la classificació <b>no afecten cap total</b>: només etiqueten un son de matinada com a continuació de la nit. <b>A Avui:</b> 🌙 <b>nit</b> = la nit anterior sencera (vespre d'ahir + matinada d'avui); 😴 <b>migdiades</b> i 👶 <b>despert</b> = des del despertar d'aquest matí fins ara; 💤 <b>son total</b> = nit + migdiades (per tant, quadra). La 3a línia de cada requadre és el <b>promig del nadó</b> als últims 7 dies complets (o els acumulats si encara no n'hi ha 7), <b>a aquesta mateixa hora</b>; la fletxa compara el valor d'avui amb aquest promig (verd = per sobre, vermell = per sota). Als requadres amb comptador, el <b>/x.x</b> és el promig de despertars, migdiades o preses (a despertars, menys és millor). No es compara amb cap norma. <b>A l'Historial</b> (dies tancats, de despertar a despertar ≈24 h), la 3a línia és <b>vs esperat</b>: son total vs rang per edat (NSF/AAP), despertars nocturns vs típics, despert = 24 h − rang de son, ml vs ~150 ml/kg/dia (amb l'últim pes registrat) o 8–12 preses si encara no hi ha pes, i ≥6 bolquers/dia. El nombre de migdiades es compara amb el rang típic per edat. <b>Índex de son:</b> es calcula <b>per dia</b>, amb 6 puntuacions contínues de 0 a 100 (son total, nit, migdiades, despert, preses i bolquers); l'índex global és la mitjana de les que tenen dades. Cada puntuació val 100 dins del rang de referència i baixa de manera gradual segons com se n'allunyi — <b>sense esglaons</b>, de manera que es mou cada dia. Referències: 💤 son total i 👶 despert vs rang per edat (NSF/AAP); 🌙 nit segons els <b>despertars</b> (menys és millor: 0 despertars puntua 100, només es penalitza per sobre del típic per edat); 🍼 preses vs ~150 ml/kg/dia (o 8–12 preses si encara no hi ha pes); 🩲 bolquers vs ≥6/dia. 😴 <b>Migdiades</b> es puntua pel <b>nombre</b> vs el rang típic per edat (0–2 m: 3–5 · 2–4 m: 3–4 · 4–6 m: 2–3 · 6–12 m: 2 · 12+ m: 1; síntesi de Pampers/Huckleberry/Little Ones). Com que cada puntuació només depèn de les dades d'aquell dia, l'evolució de l'índex es <b>reconstrueix retroactivament</b> des dels registres i se sincronitza entre dispositius (ja no es desa cap còpia local). L'índex es mostra sobre l'<b>últim dia complet</b> (amb la data indicada), perquè el dia en curs encara no té les hores fetes. Totes les mitjanes i estadístiques compten des del <b>primer dia complet de registres</b> (els registres parcials del primer dia no esbiaixen les mitjanes).</p>
   </div>
   <div class="card">
     <h2 style="margin-top:0">🔮 Predicció de migdiada i presa</h2>
@@ -1029,34 +1026,38 @@ function napDurationEstimate(){
 function daySchedule(){
   const now=new Date(), tk=dayKey(now);
   const wake=wakeAt(tk);
-  const bh=bedHourAt(now); const bed=new Date(now); bed.setHours(Math.floor(bh),Math.round((bh%1)*60),0,0);
   const napDur=napDurationEstimate();
-  const maxNaps=napCountRangeAt(tk)[1];
+  const ww=adaptedWW()*60000;
   const og=ongoing();
+  // hora de llit típica per edat com a àncora; es permet moure ±45 min segons com vagi el dia
+  const bh=bedHourAt(now); const ageBed=new Date(now); ageBed.setHours(Math.floor(bh),Math.round((bh%1)*60),0,0);
+  const bedMin=new Date(ageBed.getTime()-45*60000), bedMax=new Date(ageBed.getTime()+45*60000);
   // migdiades ja fetes avui (reals) + la que estigui en curs
   const naps = sessions.filter(s=>s.kind==='nap'&&dayKey(s.start_at)===tk&&s.end_at)
     .map(s=>({start:new Date(s.start_at), end:new Date(s.end_at), done:true}));
   if(og && og.kind==='nap' && dayKey(og.start_at)===tk)
     naps.push({start:new Date(og.start_at), end:new Date(new Date(og.start_at).getTime()+napDur), ongoing:true});
   naps.sort((a,b)=>a.start-b.start);
-  const before=t=>naps.filter(n=>n.start<bed).length;
-  // primera futura amb la predicció reactiva; la resta, encadenant la finestra adaptada
+  // propera migdiada = la predicció reactiva (coincideix amb la targeta de dalt)
   let cursor = naps.length? naps[naps.length-1].end : wake;
   const p=prediction();
-  // la propera migdiada de la predicció SEMPRE surt a l'anell (perquè coincideixi amb la targeta de dalt)
-  if(!og && p.nap && p.nap<new Date(bed-30*60000)){
+  if(!og && p.nap && p.nap < new Date(bedMax.getTime()-napDur)){
     naps.push({start:p.nap, end:new Date(p.nap.getTime()+napDur), predicted:true});
     cursor=new Date(p.nap.getTime()+napDur);
   }
-  // migdiades addicionals encadenades, respectant el nombre típic per edat
-  const ww=adaptedWW()*60000; let guard=0;
-  while(before()<maxNaps && guard++<8){
+  // s'encadenen migdiades MENTRE en càpiga una més (migdiada + finestra final) abans del llit:
+  // el nombre de migdiades emergeix de la finestra de vigília, no d'un límit fix
+  let guard=0;
+  while(guard++<9){
     const st=new Date(cursor.getTime()+ww);
-    if(st >= new Date(bed - napDur - 30*60000)) break;   // deixa marge abans del llit
+    if(st.getTime()+napDur+ww > bedMax.getTime()) break;   // ja no hi cap una migdiada més
     const e=new Date(st.getTime()+napDur);
     naps.push({start:st, end:e, predicted:true}); cursor=e;
   }
-  return {wake, bed, naps:naps.filter(n=>n.start<bed).sort((a,b)=>a.start-b.start)};
+  // hora de llit DINÀMICA = última migdiada + una finestra de vigília, acotada al voltant de la típica
+  const lastEnd = naps.length? naps[naps.length-1].end : wake;
+  let bed = new Date(Math.min(Math.max(lastEnd.getTime()+ww, bedMin.getTime()), bedMax.getTime()));
+  return {wake, bed, naps: naps.filter(n=>n.start<bed).sort((a,b)=>a.start-b.start)};
 }
 function renderDayRing(){
   const host=$('dayRing'); if(!host) return;
@@ -1066,7 +1067,7 @@ function renderDayRing(){
   const span=Math.max(1,bed-wake), clamp=t=>Math.max(0,Math.min(1,(t-wake)/span)), ang=t=>A0+(A1-A0)*clamp(t);
   const arc=(a0,a1,r)=>{const [x0,y0]=xy(a0,r),[x1,y1]=xy(a1,r);const lg=Math.abs(a0-a1)>180?1:0;
     return `M ${x0.toFixed(1)} ${y0.toFixed(1)} A ${r} ${r} 0 ${lg} 1 ${x1.toFixed(1)} ${y1.toFixed(1)}`;};
-  let s=`<svg viewBox="0 0 400 400" xmlns="http://www.w3.org/2000/svg" font-family="Nunito,-apple-system,sans-serif">`;
+  let s=`<svg viewBox="-18 -6 436 416" xmlns="http://www.w3.org/2000/svg" font-family="Nunito,-apple-system,sans-serif">`;
   s+=`<circle cx="${cx}" cy="${cy}" r="94" fill="transparent" style="cursor:pointer" onclick="toggleSleep()"/>`;
   s+=`<path d="${arc(A0,A1,R)}" fill="none" stroke="#26264d" stroke-width="16" stroke-linecap="round"/>`;
   for(const n of naps){
@@ -1076,9 +1077,9 @@ function renderDayRing(){
       s+=`<path d="${arc(ang(n.start),ang(n.end),R)}" fill="none" stroke="${col}" stroke-width="30" stroke-linecap="round" ${dash}/>`;
     const [mx,my]=xy((ang(n.start)+ang(n.end))/2,R);
     s+=`<text x="${mx}" y="${my}" font-size="18" text-anchor="middle" dominant-baseline="central">😴</text>`;
-    const [sx,sy]=xy(ang(n.start),R+33); s+=`<text x="${sx}" y="${sy}" font-size="16" font-weight="700" fill="#b4b4e4" text-anchor="middle" dominant-baseline="central">${fmtT(n.start)}</text>`;
+    const [sx,sy]=xy(ang(n.start),R+37); s+=`<text x="${sx}" y="${sy}" font-size="16" font-weight="700" fill="#b4b4e4" text-anchor="middle" dominant-baseline="central">${fmtT(n.start)}</text>`;
     const showEnd = n.ongoing || (n.predicted && (bed-n.end)>35*60000);
-    if(showEnd){ const [ex,ey]=xy(ang(n.end),R+33); s+=`<text x="${ex}" y="${ey}" font-size="16" font-weight="700" fill="#b4b4e4" text-anchor="middle" dominant-baseline="central">${fmtT(n.end)}</text>`; }
+    if(showEnd){ const [ex,ey]=xy(ang(n.end),R+37); s+=`<text x="${ex}" y="${ey}" font-size="16" font-weight="700" fill="#b4b4e4" text-anchor="middle" dominant-baseline="central">${fmtT(n.end)}</text>`; }
   }
   const [wx,wy]=xy(A0,R);
   s+=`<circle cx="${wx}" cy="${wy}" r="24" fill="#3a2f00" stroke="#fcd34d" stroke-width="2.5"/><text x="${wx}" y="${wy}" font-size="22" text-anchor="middle" dominant-baseline="central">☀️</text>`;
@@ -1390,6 +1391,7 @@ function scRange(v,lo,hi){                 // 100 dins del rang, baixa amb la di
   return Math.max(0, Math.round(100-d*250));
 }
 function scMin(v,min){ return v>=min?100:Math.max(0,Math.round(100*v/min)); }
+function scNaps(v,lo,hi){ if(v>=lo&&v<=hi) return 100; const d=v<lo?(lo-v):(v-hi); return Math.max(50,Math.round(100-d*12)); }
 function scMax(v,max){                     // menys és millor (p. ex. despertars): només penalitza per sobre
   if(v<=max) return 100;
   return Math.max(0, Math.round(100-(v-max)/Math.max(1,max)*250));
@@ -1406,7 +1408,7 @@ function dayScores(k){
   const s={
     total: o.total>0 ? scRange(h,r.lo,r.hi) : null,
     night: o.night>0 ? scMax(o.wakes,tw[1]) : null,      // 0 despertars = perfecte
-    naps:  o.napN>0 ? scRange(o.napN, nc[0], nc[1]) : null,
+    naps:  o.napN>0 ? scNaps(o.napN, nc[0], nc[1]) : null,
     awake: o.total>0 ? scRange(aw,24-r.hi,24-r.lo) : null,
     feeds: (mlExp && o.ml>0) ? scRange(o.ml, mlExp*0.85, mlExp*1.15)
          : ((w<14 && o.feedN>0) ? scRange(o.feedN,8,12) : null),
@@ -2052,6 +2054,6 @@ function show(id,txt,cls){ $(id).innerHTML=`<div class="msg ${cls}">${txt}</div>
 
 boot();
 </script>
-<!-- Dormilega v41 -->
+<!-- Dormilega v42 -->
 </body>
 </html>
